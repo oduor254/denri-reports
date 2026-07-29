@@ -223,9 +223,9 @@ def _store_performance(doc, data):
     _section_heading(doc, 3, "Store Performance")
     _para(doc, data["summary"], size=10)
     _add_table(
-        doc, ["Shop", "Current", "Previous", "Change", "Change %", "New", "Repeat"], data["rows"],
+        doc, ["Shop", "Current", "Previous", "Change", "Change %", "New", "Repeat", "Repeat Rate"], data["rows"],
         [lambda r: r["shop"], lambda r: r["current"], lambda r: r["previous"], lambda r: r["change"],
-         lambda r: r["change_pct"], lambda r: r["new"], lambda r: r["repeat"]],
+         lambda r: r["change_pct"], lambda r: r["new"], lambda r: r["repeat"], lambda r: r["repeat_rate"]],
         color_specs={3: _dir_color, 4: _dir_color},
     )
     _subheading(doc, "3.1", "Channel Mix by Location")
@@ -234,6 +234,16 @@ def _store_performance(doc, data):
         [lambda r: r["shop"], lambda r: r["walkin"], lambda r: r["online"], lambda r: r["activation"],
          lambda r: r["total"], lambda r: r["online_pct"]],
     )
+    if data.get("monthly_retention"):
+        _subheading(doc, "3.2", "Monthly Customer Retention by Location")
+        _add_table(
+            doc,
+            ["Shop", "Current Month's Customers", "Previous", "Change", "Repeat", "Repeat Rate", "Retention", "Retention Rate"],
+            data["monthly_retention"],
+            [lambda r: r["shop"], lambda r: r["current"], lambda r: r["previous"], lambda r: r["change"],
+             lambda r: r["repeat"], lambda r: r["repeat_rate"], lambda r: r["retention"], lambda r: r["retention_rate"]],
+            color_specs={3: _dir_color},
+        )
     _callout(doc, data["meeting_note"], kind="meeting", icon="\U0001F4CB")
 
 

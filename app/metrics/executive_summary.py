@@ -291,7 +291,7 @@ def build_report(
     }
 
     customer_metrics_section = customer_metrics.build_section(cur_df, prev_df, cur_kpis, prev_kpis, period)
-    store_section = store_performance.build_section(cur_df, prev_df, period)
+    store_section = store_performance.build_section(cur_df, prev_df, period_type, period)
     gender_section = gender_performance.build_section(cur_df, prev_df, period)
     traffic_section = traffic.build_section(footfall_df, footfall_gaps or [], cur_df, period)
     revenue_section = revenue.build_section(df, cur_kpis, prev_kpis, period_type, period)

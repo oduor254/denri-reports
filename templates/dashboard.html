@@ -128,6 +128,7 @@
               <th class="col-value sortable" data-key="change_pct" data-type="number">Change %</th>
               <th class="col-value sortable" data-key="new" data-type="number">New</th>
               <th class="col-value sortable" data-key="repeat" data-type="number">Repeat</th>
+              <th class="col-value sortable" data-key="repeat_rate" data-type="number">Repeat Rate</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -149,6 +150,27 @@
           </thead>
           <tbody></tbody>
         </table>
+      </div>
+
+      <div id="store-retention-wrap" hidden>
+        <h3><span class="section-num">3.2</span> Monthly Customer Retention by Location</h3>
+        <div class="table-wrap">
+          <table class="comparison-table" id="store-retention-table">
+            <thead>
+              <tr>
+                <th class="col-metric sortable" data-key="shop">Shop</th>
+                <th class="col-value sortable" data-key="current_raw">Current Month's Customers</th>
+                <th class="col-value sortable" data-key="previous_raw">Previous</th>
+                <th class="col-change sortable" data-key="change_raw">Change</th>
+                <th class="col-value sortable" data-key="repeat_raw">Repeat Customers</th>
+                <th class="col-value sortable" data-key="repeat_rate_raw">Repeat Rate</th>
+                <th class="col-value sortable" data-key="retention_raw">Retention</th>
+                <th class="col-value sortable" data-key="retention_rate_raw">Retention Rate</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
 
       <div class="callout callout-meeting" id="store-meeting-note"></div>

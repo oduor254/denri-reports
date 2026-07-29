@@ -42,6 +42,7 @@ def build_rows(cur_df: pd.DataFrame, prev_df: pd.DataFrame) -> list:
         customers = cur_shop[cur_shop["Phone Valid"]]["Phone"].nunique()
         repeat = _repeat_count(cur_shop)
         new = int(customers - repeat)
+        repeat_rate = (repeat / customers * 100) if customers else 0.0
 
         rows.append({
             "shop": shop,
@@ -52,6 +53,7 @@ def build_rows(cur_df: pd.DataFrame, prev_df: pd.DataFrame) -> list:
             "dir": dir_,
             "new": fmt.count(new),
             "repeat": fmt.count(repeat),
+            "repeat_rate": fmt.pct(repeat_rate),
             # Raw numeric values alongside the formatted strings above, so the
             # frontend can sort columns without re-parsing display text.
             "current_raw": current,
@@ -60,6 +62,7 @@ def build_rows(cur_df: pd.DataFrame, prev_df: pd.DataFrame) -> list:
             "change_pct_raw": pc,
             "new_raw": new,
             "repeat_raw": repeat,
+            "repeat_rate_raw": repeat_rate,
         })
 
     rows.sort(key=lambda r: r["current_raw"], reverse=True)
@@ -70,6 +73,7 @@ def build_rows(cur_df: pd.DataFrame, prev_df: pd.DataFrame) -> list:
     total_pc = fmt.pct_change(total_current, total_previous)
     total_customers = cur_df[cur_df["Phone Valid"]]["Phone"].nunique()
     total_repeat = _repeat_count(cur_df)
+    total_repeat_rate = (total_repeat / total_customers * 100) if total_customers else 0.0
 
     rows.append({
         "shop": "TOTAL",
@@ -80,12 +84,14 @@ def build_rows(cur_df: pd.DataFrame, prev_df: pd.DataFrame) -> list:
         "dir": total_dir,
         "new": fmt.count(total_customers - total_repeat),
         "repeat": fmt.count(total_repeat),
+        "repeat_rate": fmt.pct(total_repeat_rate),
         "current_raw": total_current,
         "previous_raw": total_previous,
         "change_raw": total_current - total_previous,
         "change_pct_raw": total_pc,
         "new_raw": total_customers - total_repeat,
         "repeat_raw": total_repeat,
+        "repeat_rate_raw": total_repeat_rate,
     })
 
     return rows
@@ -187,12 +193,92 @@ def build_channel_mix_by_location(cur_df: pd.DataFrame) -> list:
     return rows
 
 
-def build_section(cur_df: pd.DataFrame, prev_df: pd.DataFrame, period: dict) -> dict:
+def _shop_customer_set(df: pd.DataFrame, shop: str) -> set:
+    sub = df[(df["Location"] == shop) & (df["Phone Valid"])]
+    return set(sub["Phone"].unique())
+
+
+def build_monthly_retention(cur_df: pd.DataFrame, prev_df: pd.DataFrame) -> list:
+    """Month-only: distinguishes 'Repeat' (2+ visits within THIS month - a
+    frequency measure) from 'Retention' (bought last month AND bought again
+    this month - a continuity measure). Both are scoped per-shop, matching how
+    Repeat already works elsewhere in this table."""
+    shops = sorted(set(cur_df["Location"]) | set(prev_df["Location"]))
+    rows = []
+
+    for shop in shops:
+        cur_customers = _shop_customer_set(cur_df, shop)
+        prev_customers = _shop_customer_set(prev_df, shop)
+        cur_count, prev_count = len(cur_customers), len(prev_customers)
+        change, dir_ = fmt.combined_delta(cur_count, prev_count, places=0)
+
+        repeat = _repeat_count(cur_df[cur_df["Location"] == shop])
+        repeat_rate = (repeat / cur_count * 100) if cur_count else 0.0
+
+        retained = len(cur_customers & prev_customers)
+        retention_rate = (retained / prev_count * 100) if prev_count else 0.0
+
+        rows.append({
+            "shop": shop,
+            "current": fmt.count(cur_count),
+            "previous": fmt.count(prev_count),
+            "change": change,
+            "dir": dir_,
+            "repeat": fmt.count(repeat),
+            "repeat_rate": fmt.pct(repeat_rate),
+            "retention": fmt.count(retained),
+            "retention_rate": fmt.pct(retention_rate),
+            "current_raw": cur_count,
+            "previous_raw": prev_count,
+            "change_raw": cur_count - prev_count,
+            "repeat_raw": repeat,
+            "repeat_rate_raw": repeat_rate,
+            "retention_raw": retained,
+            "retention_rate_raw": retention_rate,
+        })
+
+    rows.sort(key=lambda r: r["current_raw"], reverse=True)
+
+    total_cur_customers = set(cur_df[cur_df["Phone Valid"]]["Phone"].unique())
+    total_prev_customers = set(prev_df[prev_df["Phone Valid"]]["Phone"].unique())
+    total_cur_count, total_prev_count = len(total_cur_customers), len(total_prev_customers)
+    total_change, total_dir = fmt.combined_delta(total_cur_count, total_prev_count, places=0)
+
+    total_repeat = _repeat_count(cur_df)
+    total_repeat_rate = (total_repeat / total_cur_count * 100) if total_cur_count else 0.0
+    total_retained = len(total_cur_customers & total_prev_customers)
+    total_retention_rate = (total_retained / total_prev_count * 100) if total_prev_count else 0.0
+
+    rows.append({
+        "shop": "TOTAL",
+        "current": fmt.count(total_cur_count),
+        "previous": fmt.count(total_prev_count),
+        "change": total_change,
+        "dir": total_dir,
+        "repeat": fmt.count(total_repeat),
+        "repeat_rate": fmt.pct(total_repeat_rate),
+        "retention": fmt.count(total_retained),
+        "retention_rate": fmt.pct(total_retention_rate),
+        "current_raw": total_cur_count,
+        "previous_raw": total_prev_count,
+        "change_raw": total_cur_count - total_prev_count,
+        "repeat_raw": total_repeat,
+        "repeat_rate_raw": total_repeat_rate,
+        "retention_raw": total_retained,
+        "retention_rate_raw": total_retention_rate,
+    })
+
+    return rows
+
+
+def build_section(cur_df: pd.DataFrame, prev_df: pd.DataFrame, period_type: str, period: dict) -> dict:
     rows = build_rows(cur_df, prev_df)
     channel_mix = build_channel_mix_by_location(cur_df)
+    monthly_retention = build_monthly_retention(cur_df, prev_df) if period_type == "month" else None
     return {
         "summary": build_summary(rows, channel_mix, period),
         "rows": rows,
         "channel_mix": channel_mix,
+        "monthly_retention": monthly_retention,
         "meeting_note": build_meeting_note(rows, period),
     }

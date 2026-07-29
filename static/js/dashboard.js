@@ -121,6 +121,7 @@ function renderStoreTable(rows) {
       <td class="col-value ${toneClass(row.dir)}">${row.change_pct}</td>
       <td class="col-value">${row.new}</td>
       <td class="col-value">${row.repeat}</td>
+      <td class="col-value">${row.repeat_rate}</td>
     </tr>
   `;
 
@@ -163,6 +164,30 @@ function renderStorePerformance(storePerformance) {
       <td class="col-value">${row.online_pct}</td>
     </tr>
   `).join("");
+
+  const retentionWrap = document.getElementById("store-retention-wrap");
+  if (storePerformance.monthly_retention) {
+    retentionWrap.hidden = false;
+    attachSortableTable(
+      document.getElementById("store-retention-table"),
+      () => storePerformance.monthly_retention,
+      row => `
+        <tr class="${row.shop === "TOTAL" ? "row-total" : ""}">
+          <td class="col-metric">${row.shop}</td>
+          <td class="col-value">${row.current}</td>
+          <td class="col-value">${row.previous}</td>
+          <td class="col-change ${toneClass(row.dir)}">${row.change}</td>
+          <td class="col-value">${row.repeat}</td>
+          <td class="col-value">${row.repeat_rate}</td>
+          <td class="col-value">${row.retention}</td>
+          <td class="col-value">${row.retention_rate}</td>
+        </tr>
+      `,
+      { defaultKey: "current_raw", isTotalRow: row => row.shop === "TOTAL" }
+    );
+  } else {
+    retentionWrap.hidden = true;
+  }
 
   renderMeetingNote("store-meeting-note", storePerformance.meeting_note);
 }
