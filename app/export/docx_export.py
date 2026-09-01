@@ -230,9 +230,13 @@ def _store_performance(doc, data):
     )
     _subheading(doc, "3.1", "Channel Mix by Location")
     _add_table(
-        doc, ["Shop", "Walk-in", "Online", "Activation", "Total", "Online %"], data["channel_mix"],
-        [lambda r: r["shop"], lambda r: r["walkin"], lambda r: r["online"], lambda r: r["activation"],
-         lambda r: r["total"], lambda r: r["online_pct"]],
+        doc,
+        ["Shop", "Walk-in", "Walk-in Sales (KES)", "Online", "Online Sales (KES)", "Activation",
+         "Activation Sales (KES)", "Total", "Total Sales (KES)", "Online %"],
+        data["channel_mix"],
+        [lambda r: r["shop"], lambda r: r["walkin"], lambda r: r["walkin_sales"], lambda r: r["online"],
+         lambda r: r["online_sales"], lambda r: r["activation"], lambda r: r["activation_sales"],
+         lambda r: r["total"], lambda r: r["total_sales"], lambda r: r["online_pct"]],
     )
     if data.get("monthly_retention"):
         _subheading(doc, "3.2", "Monthly Customer Retention by Location")

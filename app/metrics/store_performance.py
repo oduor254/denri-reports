@@ -158,21 +158,41 @@ def _channel_counts(df: pd.DataFrame) -> dict:
     return counts
 
 
+def _channel_sales(df: pd.DataFrame) -> dict:
+    """Sales value (KES) per channel - every matching transaction's Total,
+    not deduped by customer, since revenue counts every purchase (unlike the
+    customer counts above, where a repeat visit shouldn't double-count the
+    person)."""
+    sales = {label: float(df[df["Customer Type"] == key]["Total"].sum()) for label, key in CHANNELS}
+    sales["total"] = float(df["Total"].sum())
+    return sales
+
+
 def build_channel_mix_by_location(cur_df: pd.DataFrame) -> list:
     shops = sorted(cur_df["Location"].unique())
     rows = []
 
     for shop in shops:
-        counts = _channel_counts(cur_df[cur_df["Location"] == shop])
+        shop_df = cur_df[cur_df["Location"] == shop]
+        counts = _channel_counts(shop_df)
+        sales = _channel_sales(shop_df)
         online_pct = (counts["Online"] / counts["total"] * 100) if counts["total"] else 0.0
         rows.append({
             "shop": shop,
             "walkin": fmt.count(counts["Walk-in"]),
+            "walkin_sales": fmt.money(sales["Walk-in"]),
             "online": fmt.count(counts["Online"]),
+            "online_sales": fmt.money(sales["Online"]),
             "activation": fmt.count(counts["Activation"]),
+            "activation_sales": fmt.money(sales["Activation"]),
             "total": fmt.count(counts["total"]),
+            "total_sales": fmt.money(sales["total"]),
             "online_pct": fmt.pct(online_pct),
             "_total_raw": counts["total"],
+            "walkin_sales_raw": sales["Walk-in"],
+            "online_sales_raw": sales["Online"],
+            "activation_sales_raw": sales["Activation"],
+            "total_sales_raw": sales["total"],
         })
 
     rows.sort(key=lambda r: r["_total_raw"], reverse=True)
@@ -180,14 +200,23 @@ def build_channel_mix_by_location(cur_df: pd.DataFrame) -> list:
         del r["_total_raw"]
 
     grand = _channel_counts(cur_df)
+    grand_sales = _channel_sales(cur_df)
     grand_online_pct = (grand["Online"] / grand["total"] * 100) if grand["total"] else 0.0
     rows.append({
         "shop": "TOTAL",
         "walkin": fmt.count(grand["Walk-in"]),
+        "walkin_sales": fmt.money(grand_sales["Walk-in"]),
         "online": fmt.count(grand["Online"]),
+        "online_sales": fmt.money(grand_sales["Online"]),
         "activation": fmt.count(grand["Activation"]),
+        "activation_sales": fmt.money(grand_sales["Activation"]),
         "total": fmt.count(grand["total"]),
+        "total_sales": fmt.money(grand_sales["total"]),
         "online_pct": fmt.pct(grand_online_pct),
+        "walkin_sales_raw": grand_sales["Walk-in"],
+        "online_sales_raw": grand_sales["Online"],
+        "activation_sales_raw": grand_sales["Activation"],
+        "total_sales_raw": grand_sales["total"],
     })
 
     return rows

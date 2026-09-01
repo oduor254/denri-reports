@@ -158,9 +158,13 @@ function renderStorePerformance(storePerformance) {
     <tr class="${row.shop === "TOTAL" ? "row-total" : ""}">
       <td class="col-metric">${row.shop}</td>
       <td class="col-value">${row.walkin}</td>
+      <td class="col-value">${row.walkin_sales}</td>
       <td class="col-value">${row.online}</td>
+      <td class="col-value">${row.online_sales}</td>
       <td class="col-value">${row.activation}</td>
+      <td class="col-value">${row.activation_sales}</td>
       <td class="col-value">${row.total}</td>
+      <td class="col-value">${row.total_sales}</td>
       <td class="col-value">${row.online_pct}</td>
     </tr>
   `).join("");
