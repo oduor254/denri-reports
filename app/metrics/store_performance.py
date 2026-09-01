@@ -15,14 +15,27 @@ def _money_delta(current: float, previous: float):
     return f"{fmt.glyph(dir_)} {sign}KES {abs(diff):,.2f}", dir_
 
 
-def _repeat_count(df: pd.DataFrame) -> int:
+def _repeat_customer_set(df: pd.DataFrame) -> set:
     """Customers who visited THIS shop on 2+ distinct days in the period (per-store
     repeat, independent of whether they also shopped at other locations)."""
     valid = df[df["Phone Valid"]]
     if valid.empty:
-        return 0
+        return set()
     visit_days = valid.groupby("Phone")["Date"].nunique()
-    return int((visit_days >= 2).sum())
+    return set(visit_days[visit_days >= 2].index)
+
+
+def _repeat_count(df: pd.DataFrame) -> int:
+    return len(_repeat_customer_set(df))
+
+
+def _sales_for_customers(df: pd.DataFrame, phones: set) -> float:
+    """Sum of Total for this period's transactions belonging to the given
+    customer set - e.g. all of a repeat/retained customer's purchases this
+    period, not just the ones that made them qualify."""
+    if not phones:
+        return 0.0
+    return float(df[df["Phone"].isin(phones)]["Total"].sum())
 
 
 def build_rows(cur_df: pd.DataFrame, prev_df: pd.DataFrame) -> list:
@@ -222,81 +235,67 @@ def build_channel_mix_by_location(cur_df: pd.DataFrame) -> list:
     return rows
 
 
-def _shop_customer_set(df: pd.DataFrame, shop: str) -> set:
-    sub = df[(df["Location"] == shop) & (df["Phone Valid"])]
-    return set(sub["Phone"].unique())
+def _retention_row(shop_label: str, cur_shop_df: pd.DataFrame, prev_shop_df: pd.DataFrame) -> dict:
+    cur_customers = set(cur_shop_df[cur_shop_df["Phone Valid"]]["Phone"].unique())
+    prev_customers = set(prev_shop_df[prev_shop_df["Phone Valid"]]["Phone"].unique())
+    cur_count, prev_count = len(cur_customers), len(prev_customers)
+    change, dir_ = fmt.combined_delta(cur_count, prev_count, places=0)
+
+    cur_sales = float(cur_shop_df["Total"].sum())
+    prev_sales = float(prev_shop_df["Total"].sum())
+
+    repeat_set = _repeat_customer_set(cur_shop_df)
+    repeat = len(repeat_set)
+    repeat_rate = (repeat / cur_count * 100) if cur_count else 0.0
+    repeat_sales = _sales_for_customers(cur_shop_df, repeat_set)
+
+    retained = cur_customers & prev_customers
+    retention_rate = (len(retained) / prev_count * 100) if prev_count else 0.0
+    retention_sales = _sales_for_customers(cur_shop_df, retained)
+
+    return {
+        "shop": shop_label,
+        "current": fmt.count(cur_count),
+        "current_sales": fmt.money(cur_sales),
+        "previous": fmt.count(prev_count),
+        "previous_sales": fmt.money(prev_sales),
+        "change": change,
+        "dir": dir_,
+        "repeat": fmt.count(repeat),
+        "repeat_sales": fmt.money(repeat_sales),
+        "repeat_rate": fmt.pct(repeat_rate),
+        "retention": fmt.count(len(retained)),
+        "retention_sales": fmt.money(retention_sales),
+        "retention_rate": fmt.pct(retention_rate),
+        "current_raw": cur_count,
+        "current_sales_raw": cur_sales,
+        "previous_raw": prev_count,
+        "previous_sales_raw": prev_sales,
+        "change_raw": cur_count - prev_count,
+        "repeat_raw": repeat,
+        "repeat_sales_raw": repeat_sales,
+        "repeat_rate_raw": repeat_rate,
+        "retention_raw": len(retained),
+        "retention_sales_raw": retention_sales,
+        "retention_rate_raw": retention_rate,
+    }
 
 
 def build_monthly_retention(cur_df: pd.DataFrame, prev_df: pd.DataFrame) -> list:
     """Month-only: distinguishes 'Repeat' (2+ visits within THIS month - a
     frequency measure) from 'Retention' (bought last month AND bought again
     this month - a continuity measure). Both are scoped per-shop, matching how
-    Repeat already works elsewhere in this table."""
+    Repeat already works elsewhere in this table. Sales values alongside each
+    customer-count column mirror how 3.1 Channel Mix pairs counts with revenue -
+    a repeat/retained customer's full purchases this month, not just the visit
+    that qualified them."""
     shops = sorted(set(cur_df["Location"]) | set(prev_df["Location"]))
-    rows = []
-
-    for shop in shops:
-        cur_customers = _shop_customer_set(cur_df, shop)
-        prev_customers = _shop_customer_set(prev_df, shop)
-        cur_count, prev_count = len(cur_customers), len(prev_customers)
-        change, dir_ = fmt.combined_delta(cur_count, prev_count, places=0)
-
-        repeat = _repeat_count(cur_df[cur_df["Location"] == shop])
-        repeat_rate = (repeat / cur_count * 100) if cur_count else 0.0
-
-        retained = len(cur_customers & prev_customers)
-        retention_rate = (retained / prev_count * 100) if prev_count else 0.0
-
-        rows.append({
-            "shop": shop,
-            "current": fmt.count(cur_count),
-            "previous": fmt.count(prev_count),
-            "change": change,
-            "dir": dir_,
-            "repeat": fmt.count(repeat),
-            "repeat_rate": fmt.pct(repeat_rate),
-            "retention": fmt.count(retained),
-            "retention_rate": fmt.pct(retention_rate),
-            "current_raw": cur_count,
-            "previous_raw": prev_count,
-            "change_raw": cur_count - prev_count,
-            "repeat_raw": repeat,
-            "repeat_rate_raw": repeat_rate,
-            "retention_raw": retained,
-            "retention_rate_raw": retention_rate,
-        })
-
+    rows = [
+        _retention_row(shop, cur_df[cur_df["Location"] == shop], prev_df[prev_df["Location"] == shop])
+        for shop in shops
+    ]
     rows.sort(key=lambda r: r["current_raw"], reverse=True)
-
-    total_cur_customers = set(cur_df[cur_df["Phone Valid"]]["Phone"].unique())
-    total_prev_customers = set(prev_df[prev_df["Phone Valid"]]["Phone"].unique())
-    total_cur_count, total_prev_count = len(total_cur_customers), len(total_prev_customers)
-    total_change, total_dir = fmt.combined_delta(total_cur_count, total_prev_count, places=0)
-
-    total_repeat = _repeat_count(cur_df)
-    total_repeat_rate = (total_repeat / total_cur_count * 100) if total_cur_count else 0.0
-    total_retained = len(total_cur_customers & total_prev_customers)
-    total_retention_rate = (total_retained / total_prev_count * 100) if total_prev_count else 0.0
-
-    rows.append({
-        "shop": "TOTAL",
-        "current": fmt.count(total_cur_count),
-        "previous": fmt.count(total_prev_count),
-        "change": total_change,
-        "dir": total_dir,
-        "repeat": fmt.count(total_repeat),
-        "repeat_rate": fmt.pct(total_repeat_rate),
-        "retention": fmt.count(total_retained),
-        "retention_rate": fmt.pct(total_retention_rate),
-        "current_raw": total_cur_count,
-        "previous_raw": total_prev_count,
-        "change_raw": total_cur_count - total_prev_count,
-        "repeat_raw": total_repeat,
-        "repeat_rate_raw": total_repeat_rate,
-        "retention_raw": total_retained,
-        "retention_rate_raw": total_retention_rate,
-    })
-
+    rows.append(_retention_row("TOTAL", cur_df, prev_df))
     return rows
 
 

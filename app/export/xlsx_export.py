@@ -177,11 +177,13 @@ def _store_performance_sheet(wb, data):
         row = _subtitle(ws, row, "3.2 Monthly Customer Retention by Location")
         row = _write_table(
             ws, row,
-            ["Shop", "Current Month's Customers", "Previous", "Change", "Repeat", "Repeat Rate", "Retention", "Retention Rate"],
+            ["Shop", "Current Month's Customers", "Current Month's Sales (KES)", "Previous", "Previous Sales (KES)",
+             "Change", "Repeat", "Repeat Sales (KES)", "Repeat Rate", "Retention", "Retention Sales (KES)", "Retention Rate"],
             data["monthly_retention"],
-            [lambda r: r["shop"], lambda r: r["current"], lambda r: r["previous"], lambda r: r["change"],
-             lambda r: r["repeat"], lambda r: r["repeat_rate"], lambda r: r["retention"], lambda r: r["retention_rate"]],
-            color_specs={3: _dir_color},
+            [lambda r: r["shop"], lambda r: r["current"], lambda r: r["current_sales"], lambda r: r["previous"],
+             lambda r: r["previous_sales"], lambda r: r["change"], lambda r: r["repeat"], lambda r: r["repeat_sales"],
+             lambda r: r["repeat_rate"], lambda r: r["retention"], lambda r: r["retention_sales"], lambda r: r["retention_rate"]],
+            color_specs={5: _dir_color},
         )
     _note(ws, row, data["meeting_note"])
     _autosize(ws)

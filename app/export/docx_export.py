@@ -242,11 +242,13 @@ def _store_performance(doc, data):
         _subheading(doc, "3.2", "Monthly Customer Retention by Location")
         _add_table(
             doc,
-            ["Shop", "Current Month's Customers", "Previous", "Change", "Repeat", "Repeat Rate", "Retention", "Retention Rate"],
+            ["Shop", "Current Month's Customers", "Current Month's Sales (KES)", "Previous", "Previous Sales (KES)",
+             "Change", "Repeat", "Repeat Sales (KES)", "Repeat Rate", "Retention", "Retention Sales (KES)", "Retention Rate"],
             data["monthly_retention"],
-            [lambda r: r["shop"], lambda r: r["current"], lambda r: r["previous"], lambda r: r["change"],
-             lambda r: r["repeat"], lambda r: r["repeat_rate"], lambda r: r["retention"], lambda r: r["retention_rate"]],
-            color_specs={3: _dir_color},
+            [lambda r: r["shop"], lambda r: r["current"], lambda r: r["current_sales"], lambda r: r["previous"],
+             lambda r: r["previous_sales"], lambda r: r["change"], lambda r: r["repeat"], lambda r: r["repeat_sales"],
+             lambda r: r["repeat_rate"], lambda r: r["retention"], lambda r: r["retention_sales"], lambda r: r["retention_rate"]],
+            color_specs={5: _dir_color},
         )
     _callout(doc, data["meeting_note"], kind="meeting", icon="\U0001F4CB")
 

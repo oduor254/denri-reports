@@ -179,11 +179,15 @@ function renderStorePerformance(storePerformance) {
         <tr class="${row.shop === "TOTAL" ? "row-total" : ""}">
           <td class="col-metric">${row.shop}</td>
           <td class="col-value">${row.current}</td>
+          <td class="col-value">${row.current_sales}</td>
           <td class="col-value">${row.previous}</td>
+          <td class="col-value">${row.previous_sales}</td>
           <td class="col-change ${toneClass(row.dir)}">${row.change}</td>
           <td class="col-value">${row.repeat}</td>
+          <td class="col-value">${row.repeat_sales}</td>
           <td class="col-value">${row.repeat_rate}</td>
           <td class="col-value">${row.retention}</td>
+          <td class="col-value">${row.retention_sales}</td>
           <td class="col-value">${row.retention_rate}</td>
         </tr>
       `,
@@ -196,13 +200,13 @@ function renderStorePerformance(storePerformance) {
   renderMeetingNote("store-meeting-note", storePerformance.meeting_note);
 }
 
-// Fixed categorical order (palette slots 1-3) - Female/Male/Organization
+// Fixed categorical order (palette slots 1-3) - Female/Male/Corporate
 // always map to the same series color, so identity stays consistent across
-// reloads regardless of which shops have Organization activity that period.
+// reloads regardless of which shops have Corporate activity that period.
 const GENDER_SERIES = {
   female: { css: "series-1", color: "var(--series-1)" },
   male: { css: "series-2", color: "var(--series-2)" },
-  organization: { css: "series-3", color: "var(--series-3)" },
+  corporate: { css: "series-3", color: "var(--series-3)" },
 };
 
 function renderGenderRatio(ratio) {

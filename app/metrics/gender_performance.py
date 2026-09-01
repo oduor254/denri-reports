@@ -4,12 +4,14 @@ from app.metrics import formatting as fmt
 
 # Fixed display order; "N/A" only appears in the Overall Split (4.1) when it
 # actually has rows in the current or previous period (per user request).
-_CATEGORIES = ["Female", "Male", "Organization", "N/A"]
+# "Corporate" is the sheet's non-individual-customer category (recorded as
+# "Organization" on older rows, folded together in app/data/shops.py).
+_CATEGORIES = ["Female", "Male", "Corporate", "N/A"]
 
 # Gender by Location (4.2) always shows these three as fixed columns, regardless
-# of whether a given period has any Organization rows - N/A is excluded from
+# of whether a given period has any Corporate rows - N/A is excluded from
 # this table entirely (per user request).
-_LOCATION_CATEGORIES = ["Female", "Male", "Organization"]
+_LOCATION_CATEGORIES = ["Female", "Male", "Corporate"]
 
 
 def _customer_gender(df: pd.DataFrame) -> pd.Series:

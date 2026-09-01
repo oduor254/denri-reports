@@ -17,7 +17,7 @@
   --critical: #d03b3b;
 
   /* Categorical, fixed order (palette slots 1-4) - reused for any 4-category
-     breakdown; Gender by Location maps Female/Male/Organization/N-A onto
+     breakdown; Gender by Location maps Female/Male/Corporate/N-A onto
      these in that fixed order regardless of which are present in a period. */
   --series-1: #2a78d6;
   --series-2: #1baf7a;

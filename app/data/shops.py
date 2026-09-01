@@ -73,10 +73,13 @@ def _parse_shops(values):
     df["Comparison"] = df["Comparison"].str.strip().str.upper() == "TRUE"
     df["Customer Type"] = df["Customer Type"].str.strip().str.lower()
     df["Location"] = df["Location"].str.strip().replace({"Ktda": "KTDA"})
-    # Gender has case-dupes ("male"/"female" vs "Male"/"Female") plus real "N/A" and
-    # "Organization" values already in the sheet - .title() folds the dupes without
-    # disturbing N/A or Organization.
-    df["Gender"] = df["Gender"].str.strip().str.title()
+    # Gender has case-dupes ("male"/"female" vs "Male"/"Female") plus real "N/A"
+    # values already in the sheet - .title() folds the dupes without disturbing
+    # N/A. The sheet also has two labels for the same non-individual-customer
+    # category ("Organization" on older rows, "Corporate" on newer ones, since
+    # whoever enters data switched terms) - fold the older label into the
+    # current one so they aren't shown as two separate categories.
+    df["Gender"] = df["Gender"].str.strip().str.title().replace({"Organization": "Corporate"})
 
     return df.reset_index(drop=True)
 
