@@ -78,6 +78,9 @@ def build_bridge(df: pd.DataFrame, period_type: str, period: dict) -> list:
             "avg_spend": fmt.money(kpis["Avg Spend/Customer"]),
             "trend": fmt.glyph(dir_),
             "dir": dir_,
+            # Raw value for anything that needs to plot this (e.g. the pptx
+            # export's revenue-bridge chart) rather than re-parsing "KES 1,234.56".
+            "revenue_raw": kpis["Revenue"],
         })
         prev_revenue = kpis["Revenue"]
 

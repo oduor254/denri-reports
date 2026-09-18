@@ -82,48 +82,55 @@ def build_frequency_distribution(cur_df: pd.DataFrame) -> list:
 
 
 def build_channel_overview(cur_df: pd.DataFrame) -> list:
+    """Distribution by unique customer (dedup by valid Phone), not transaction
+    count - matches the 'Total Customers' KPI elsewhere, so this table's TOTAL
+    row reconciles with it instead of showing a larger, transaction-inflated
+    figure. Avg Spend stays a per-transaction average (a distinct, deliberately
+    different metric from per-customer spend used elsewhere)."""
+    valid = cur_df[cur_df["Phone Valid"]]
+    total_customers = valid["Phone"].nunique()
     total_txn = len(cur_df)
     rows = []
 
     for label, key in CHANNELS:
-        sub = cur_df[cur_df["Customer Type"] == key]
-        orders = len(sub)
-        share = (orders / total_txn * 100) if total_txn else 0.0
-        avg_spend = float(sub["Total"].mean()) if not sub.empty else 0.0
+        channel_df = cur_df[cur_df["Customer Type"] == key]
+        customers = channel_df[channel_df["Phone Valid"]]["Phone"].nunique()
+        share = (customers / total_customers * 100) if total_customers else 0.0
+        avg_spend = float(channel_df["Total"].mean()) if not channel_df.empty else 0.0
         rows.append({
-            "channel": label, "orders": fmt.count(orders), "share": fmt.pct(share),
-            "avg_spend": fmt.money(avg_spend), "_avg_spend_raw": avg_spend, "_orders_raw": orders,
+            "channel": label, "customers": fmt.count(customers), "share": fmt.pct(share),
+            "avg_spend": fmt.money(avg_spend), "_avg_spend_raw": avg_spend, "_customers_raw": customers,
         })
 
-    tagged = sum(r["_orders_raw"] for r in rows)
-    untagged_orders = total_txn - tagged
-    if untagged_orders > 0:
-        untagged_sub = cur_df[~cur_df["Customer Type"].isin([key for _, key in CHANNELS])]
-        untagged_share = (untagged_orders / total_txn * 100) if total_txn else 0.0
-        avg_spend = float(untagged_sub["Total"].mean()) if not untagged_sub.empty else 0.0
+    tagged = sum(r["_customers_raw"] for r in rows)
+    untagged_customers = total_customers - tagged
+    if untagged_customers > 0:
+        untagged_df = cur_df[~cur_df["Customer Type"].isin([key for _, key in CHANNELS])]
+        untagged_share = (untagged_customers / total_customers * 100) if total_customers else 0.0
+        avg_spend = float(untagged_df["Total"].mean()) if not untagged_df.empty else 0.0
         rows.append({
-            "channel": "Untagged / Other", "orders": fmt.count(untagged_orders),
+            "channel": "Untagged / Other", "customers": fmt.count(untagged_customers),
             "share": fmt.pct(untagged_share), "avg_spend": fmt.money(avg_spend),
-            "_avg_spend_raw": avg_spend, "_orders_raw": untagged_orders,
+            "_avg_spend_raw": avg_spend, "_customers_raw": untagged_customers,
         })
 
-    tagged_rows = [r for r in rows if r["channel"] != "Untagged / Other" and r["_orders_raw"] > 0]
+    tagged_rows = [r for r in rows if r["channel"] != "Untagged / Other" and r["_customers_raw"] > 0]
     best = max(tagged_rows, key=lambda r: r["_avg_spend_raw"], default=None)
 
     for r in rows:
         note = ""
         if best is not None and r is best:
             note = "Highest avg spend"
-        elif r["channel"] == "Untagged / Other" and total_txn and r["_orders_raw"] / total_txn > 0.10:
+        elif r["channel"] == "Untagged / Other" and total_customers and r["_customers_raw"] / total_customers > 0.10:
             note = "Needs Customer Type tagging"
         r["note"] = note
         del r["_avg_spend_raw"]
-        del r["_orders_raw"]
+        del r["_customers_raw"]
 
     total_revenue = float(cur_df["Total"].sum())
     avg_spend_total = (total_revenue / total_txn) if total_txn else 0.0
     rows.append({
-        "channel": "TOTAL", "orders": fmt.count(total_txn), "share": "100.0%",
+        "channel": "TOTAL", "customers": fmt.count(total_customers), "share": "100.0%",
         "avg_spend": fmt.money(avg_spend_total), "note": "",
     })
 
@@ -148,7 +155,7 @@ def build_summary(cur_kpis: dict, prev_kpis: dict, frequency: list, channels: li
     tagged = [c for c in channels if c["channel"] not in ("Untagged / Other", "TOTAL")]
     leading = max(tagged, key=lambda c: float(c["share"].rstrip("%")), default=None)
     if leading:
-        sentences.append(f"{leading['channel']} led order volume at {leading['share']} of transactions.")
+        sentences.append(f"{leading['channel']} led with {leading['share']} of customers this period.")
 
     return " ".join(sentences)
 
@@ -162,7 +169,7 @@ def build_meeting_note(cur_kpis: dict, prev_kpis: dict, channels: list, period: 
 
     sentences = [f"Repeat customer rate {rr_word} vs {period['compared_to']} ({rr_change.split(' ', 1)[1]})."]
     if leading:
-        sentences.append(f"{leading['channel']} remains the leading tagged channel at {leading['share']} of orders.")
+        sentences.append(f"{leading['channel']} remains the leading tagged channel at {leading['share']} of customers.")
 
     untagged = next((r for r in channels if r["channel"] == "Untagged / Other"), None)
     if untagged and untagged["note"]:

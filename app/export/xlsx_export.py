@@ -147,8 +147,8 @@ def _customer_metrics_sheet(wb, data):
     )
     row = _subtitle(ws, row, "2.2 Channel Overview")
     row = _write_table(
-        ws, row, ["Channel", "Orders", "Share", "Avg Spend", "Note"], data["channels"],
-        [lambda r: r["channel"], lambda r: r["orders"], lambda r: r["share"], lambda r: r["avg_spend"], lambda r: r["note"]],
+        ws, row, ["Channel", "Customers", "Share", "Avg Spend", "Note"], data["channels"],
+        [lambda r: r["channel"], lambda r: r["customers"], lambda r: r["share"], lambda r: r["avg_spend"], lambda r: r["note"]],
     )
     _note(ws, row, data["meeting_note"])
     _autosize(ws)

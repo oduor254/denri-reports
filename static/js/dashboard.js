@@ -87,7 +87,7 @@ function renderCustomerMetrics(customerMetrics) {
   channelBody.innerHTML = customerMetrics.channels.map(row => `
     <tr class="${row.channel === "TOTAL" ? "row-total" : ""}">
       <td class="col-metric">${row.channel}</td>
-      <td class="col-value">${row.orders}</td>
+      <td class="col-value">${row.customers}</td>
       <td class="col-value">${row.share}</td>
       <td class="col-value">${row.avg_spend}</td>
       <td class="col-note">${row.note}</td>
@@ -793,6 +793,9 @@ function initFilterBar(meta) {
   };
   document.getElementById("export-xlsx").onclick = () => {
     window.location.href = `/api/export/xlsx?period=${meta.period_type}&date=${meta.start}`;
+  };
+  document.getElementById("export-pptx").onclick = () => {
+    window.location.href = `/api/export/pptx?period=${meta.period_type}&date=${meta.start}`;
   };
 }
 

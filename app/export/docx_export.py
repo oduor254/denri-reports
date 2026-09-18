@@ -213,8 +213,8 @@ def _customer_metrics(doc, data):
     )
     _subheading(doc, "2.2", "Channel Overview")
     _add_table(
-        doc, ["Channel", "Orders", "Share", "Avg Spend", "Note"], data["channels"],
-        [lambda r: r["channel"], lambda r: r["orders"], lambda r: r["share"], lambda r: r["avg_spend"], lambda r: r["note"]],
+        doc, ["Channel", "Customers", "Share", "Avg Spend", "Note"], data["channels"],
+        [lambda r: r["channel"], lambda r: r["customers"], lambda r: r["share"], lambda r: r["avg_spend"], lambda r: r["note"]],
     )
     _callout(doc, data["meeting_note"], kind="meeting", icon="\U0001F4CB")
 

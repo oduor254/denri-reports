@@ -6,6 +6,7 @@ from app.data.feedback import load_feedback_by_shop, load_feedback_daily, load_f
 from app.data.footfall import get_footfall_gaps, load_footfall_df
 from app.data.shops import load_shops_df
 from app.export.docx_export import build_docx
+from app.export.pptx_export import build_pptx
 from app.export.xlsx_export import build_xlsx
 from app.metrics.executive_summary import build_report
 from app.sheets_client import clear_cache
@@ -100,6 +101,22 @@ def export_xlsx():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         as_attachment=True,
         download_name=_export_filename(report, "xlsx"),
+    )
+
+
+@bp.route("/api/export/pptx")
+def export_pptx():
+    try:
+        report = _load_report()
+    except BadRequest as e:
+        return jsonify({"error": e.message}), 400
+
+    buf = build_pptx(report)
+    return send_file(
+        buf,
+        mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        as_attachment=True,
+        download_name=_export_filename(report, "pptx"),
     )
 
 
