@@ -18,7 +18,7 @@ from pptx.chart.data import CategoryChartData
 from pptx.dml.color import RGBColor
 from pptx.enum.chart import XL_CHART_TYPE, XL_LEGEND_POSITION
 from pptx.enum.text import PP_ALIGN
-from pptx.util import Inches, Pt
+from pptx.util import Emu, Inches, Pt
 
 # Theme: light lavender canvas, deep indigo headlines, purple/teal/yellow/coral
 # accents - a data-analytics deck palette rather than the docx/xlsx's navy
@@ -514,12 +514,15 @@ def _traffic_slide(prs, data):
     if data.get("data_gap_note"):
         _callout(slide, "⚠ " + data["data_gap_note"], top, kind="warning")
         top += Inches(0.6)
+    if data.get("data_anomaly_note"):
+        _callout(slide, "⚠ " + data["data_anomaly_note"], top, kind="warning")
+        top += Inches(0.6)
 
     shops = [r for r in data["rows"] if r["shop"] != "TOTAL"][:8]
     _add_bar_chart(
         slide, [r["shop"] for r in shops],
         [("Walk-in", [r["walkin_total_raw"] for r in shops]), ("Online", [r["online_raw"] for r in shops])],
-        MARGIN, top, LEFT_W, Inches(4.6 - float(top.inches - 1.95)),
+        MARGIN, top, LEFT_W, Inches(4.6 - (Emu(top).inches - 1.95)),
     )
 
     rows, omitted = _top_n(data["rows"], 8)

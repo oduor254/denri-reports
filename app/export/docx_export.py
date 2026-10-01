@@ -280,6 +280,8 @@ def _traffic(doc, data):
     _para(doc, data["summary"], size=10)
     if data.get("data_gap_note"):
         _callout(doc, data["data_gap_note"], kind="watch", icon="⚠")
+    if data.get("data_anomaly_note"):
+        _callout(doc, data["data_anomaly_note"], kind="watch", icon="⚠")
     _add_table(
         doc, ["Shop", "Walk-in Purchased", "Walk-in Total", "Conv. Rate", "Online", "Activation", "Total Customers"],
         data["rows"],

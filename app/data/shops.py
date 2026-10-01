@@ -47,6 +47,30 @@ def _classify_phone_kyc(phone: str) -> str:
     return "invalid"
 
 
+def _classify_invalid_reason(phone: str) -> str:
+    """Why a phone _classify_phone_kyc rejected is invalid, so 'Invalid' can be
+    split into problems with different fixes. '' for phones that aren't invalid.
+
+    - 'unreadable': not all digits - usually the spreadsheet turned a long number
+      into scientific notation (2.55E+11), so the real number is lost.
+    - 'too_short': under 9 digits - a digit was dropped at entry (the sheet's own
+      'incomplete' numbers).
+    - 'wrong_prefix': 9 digits but not starting 7/1/6 - not a KE mobile; a typo,
+      or a foreign number entered without its country code.
+    - 'too_long': 10 digits without a leading 0 - looks like a stray extra digit.
+    """
+    if _classify_phone_kyc(phone) != "invalid":
+        return ""
+    p = phone.strip()
+    if not p.isdigit():
+        return "unreadable"
+    if len(p) < 9:
+        return "too_short"
+    if len(p) == 9:
+        return "wrong_prefix"
+    return "too_long"
+
+
 def _parse_shops(values):
     rows = values[1:]
     trimmed = [
@@ -66,6 +90,7 @@ def _parse_shops(values):
     df["Phone"] = df["Phone"].str.strip()
     df["Phone Valid"] = df["Phone"].str.match(r"^\d{9}$|^\d{10}$|^\d{12}$")
     df["Phone KYC"] = df["Phone"].apply(_classify_phone_kyc)
+    df["Phone KYC Issue"] = df["Phone"].apply(_classify_invalid_reason)
 
     df["Repeat"] = df["Repeat"].str.strip().str.lower() == "yes"
     # Comparison == TRUE flags a transaction where the phone captured is the

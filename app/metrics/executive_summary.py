@@ -252,7 +252,7 @@ def build_report(
     df: pd.DataFrame, period_type: str, ref_date=None,
     footfall_df: pd.DataFrame = None, footfall_gaps: list = None,
     feedback_daily_df: pd.DataFrame = None, feedback_by_shop_df: pd.DataFrame = None,
-    feedback_links_df: pd.DataFrame = None,
+    feedback_links_df: pd.DataFrame = None, footfall_anomalies: list = None,
 ) -> dict:
     if footfall_df is None:
         footfall_df = pd.DataFrame(columns=["Shop", "Date", "Walkins Purchased", "Walkins Not Purchased", "Total"])
@@ -293,7 +293,7 @@ def build_report(
     customer_metrics_section = customer_metrics.build_section(cur_df, prev_df, cur_kpis, prev_kpis, period)
     store_section = store_performance.build_section(cur_df, prev_df, period_type, period)
     gender_section = gender_performance.build_section(cur_df, prev_df, period)
-    traffic_section = traffic.build_section(footfall_df, footfall_gaps or [], cur_df, period)
+    traffic_section = traffic.build_section(footfall_df, footfall_gaps or [], cur_df, period, footfall_anomalies or [])
     revenue_section = revenue.build_section(df, cur_kpis, prev_kpis, period_type, period)
     data_quality_section = data_quality.build_section(cur_df, prev_df, period)
     feedback_section = feedback.build_section(feedback_daily_df, feedback_by_shop_df, feedback_links_df, period_type, period)

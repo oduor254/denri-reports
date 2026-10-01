@@ -9,6 +9,15 @@ _ROWS = [
     ("Invalid", "invalid"),
 ]
 
+# Breakdown of 'Invalid', shown as indented sub-rows beneath it. Each kind needs a
+# different fix, and 'too_short' is what the sheet itself counts as "incomplete".
+_INVALID_REASONS = [
+    ("↳ Incomplete (under 9 digits)", "too_short"),
+    ("↳ Wrong prefix (9 digits, not 7/1/6)", "wrong_prefix"),
+    ("↳ Extra digit (10 digits, no leading 0)", "too_long"),
+    ("↳ Unreadable (e.g. 2.55E+11)", "unreadable"),
+]
+
 
 def _counts(df: pd.DataFrame) -> dict:
     """Customer-level, not transaction-level: a phone number is a real identifier,
@@ -20,12 +29,15 @@ def _counts(df: pd.DataFrame) -> dict:
     valid = int(valid_df["Phone"].nunique())
     na = int((df["Phone KYC"] == "na").sum())
     invalid = int((df["Phone KYC"] == "invalid").sum())
-    return {
+    counts = {
         "Total Records": valid + na + invalid,
         "valid": valid,
         "na": na,
         "invalid": invalid,
     }
+    for _, reason in _INVALID_REASONS:
+        counts[reason] = int((df["Phone KYC Issue"] == reason).sum())
+    return counts
 
 
 def _store_number_unique_count(df: pd.DataFrame) -> int:
@@ -60,8 +72,11 @@ def build_comparison_rows(cur_df: pd.DataFrame, prev_df: pd.DataFrame) -> list:
     cur_total = cur_counts["Total Records"]
     prev_total = prev_counts["Total Records"]
 
+    # Only show breakdown rows that occur in either period, to keep the table short.
+    reason_rows = [(label, key) for label, key in _INVALID_REASONS if cur_counts[key] or prev_counts[key]]
+
     rows = []
-    for label, key in _ROWS:
+    for label, key in _ROWS + reason_rows:
         cur_val = cur_counts["Total Records"] if key is None else cur_counts[key]
         prev_val = prev_counts["Total Records"] if key is None else prev_counts[key]
         cur_pct = (cur_val / cur_total * 100) if cur_total else 0.0

@@ -33,6 +33,21 @@ def build_data_gap_note(gaps: list, start: date, end: date):
     )
 
 
+def build_anomaly_note(anomalies: list, start: date, end: date):
+    in_period = [a for a in anomalies if start <= a["date"] <= end]
+    if not in_period:
+        return None
+
+    parts = [
+        f"{a['shop']} {a['date']:%d %b}: {a['field']} = {a['value']} (cell {a['cell']})"
+        for a in sorted(in_period, key=lambda a: (a["date"], a["shop"]))
+    ]
+    return (
+        "Footfall sheet has impossible negative counts this period: " + "; ".join(parts)
+        + ". They're included as entered so totals match the sheet - correct the cell(s) at source."
+    )
+
+
 def build_rows(footfall_period_df: pd.DataFrame, cur_shops_df: pd.DataFrame) -> list:
     # Walk-in Purchased/Total/Conv. Rate come from the Footfall sheet, which has
     # no customer identity at all (it's a door-tally, not a transaction log) -
@@ -127,7 +142,7 @@ def build_summary(rows: list, period: dict) -> str:
     return " ".join(sentences)
 
 
-def build_meeting_note(rows: list, data_gap_note, period: dict) -> str:
+def build_meeting_note(rows: list, data_gap_note, data_anomaly_note, period: dict) -> str:
     shops = [r for r in rows if r["shop"] != "TOTAL" and r["walkin_total_raw"] > 0]
     sentences = []
 
@@ -139,13 +154,16 @@ def build_meeting_note(rows: list, data_gap_note, period: dict) -> str:
     if data_gap_note:
         sentences.append("Footfall data has gaps this period (see callout above) - confirm daily entry is happening consistently.")
 
+    if data_anomaly_note:
+        sentences.append("Some footfall entries are negative (see callout above) - ask the shops concerned to re-check their daily totals.")
+
     if not sentences:
         sentences.append(f"Conversion rates were healthy across stores vs {period['compared_to']} - no escalations needed.")
 
     return " ".join(sentences)
 
 
-def build_section(footfall_df: pd.DataFrame, gaps: list, cur_shops_df: pd.DataFrame, period: dict) -> dict:
+def build_section(footfall_df: pd.DataFrame, gaps: list, cur_shops_df: pd.DataFrame, period: dict, anomalies: list = None) -> dict:
     start, end = period["start"], period["end"]
 
     if footfall_df.empty:
@@ -155,11 +173,13 @@ def build_section(footfall_df: pd.DataFrame, gaps: list, cur_shops_df: pd.DataFr
         footfall_period_df = footfall_df[(dates >= start) & (dates <= end)]
 
     data_gap_note = build_data_gap_note(gaps, start, end)
+    data_anomaly_note = build_anomaly_note(anomalies or [], start, end)
     rows = build_rows(footfall_period_df, cur_shops_df)
 
     return {
         "summary": build_summary(rows, period),
         "data_gap_note": data_gap_note,
+        "data_anomaly_note": data_anomaly_note,
         "rows": rows,
-        "meeting_note": build_meeting_note(rows, data_gap_note, period),
+        "meeting_note": build_meeting_note(rows, data_gap_note, data_anomaly_note, period),
     }

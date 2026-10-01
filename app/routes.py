@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import Blueprint, jsonify, render_template, request, send_file
 
 from app.data.feedback import load_feedback_by_shop, load_feedback_daily, load_feedback_links
-from app.data.footfall import get_footfall_gaps, load_footfall_df
+from app.data.footfall import get_footfall_anomalies, get_footfall_gaps, load_footfall_df
 from app.data.shops import load_shops_df
 from app.export.docx_export import build_docx
 from app.export.pptx_export import build_pptx
@@ -43,13 +43,14 @@ def _load_report():
     df = load_shops_df()
     footfall_df = load_footfall_df()
     footfall_gaps = get_footfall_gaps()
+    footfall_anomalies = get_footfall_anomalies()
     feedback_daily_df = load_feedback_daily()
     feedback_by_shop_df = load_feedback_by_shop()
     feedback_links_df = load_feedback_links()
 
     return build_report(
         df, period_type, ref_date, footfall_df, footfall_gaps,
-        feedback_daily_df, feedback_by_shop_df, feedback_links_df,
+        feedback_daily_df, feedback_by_shop_df, feedback_links_df, footfall_anomalies,
     )
 
 

@@ -139,6 +139,9 @@ def build_data_notes(data_quality_section: dict, traffic_section: dict, customer
     if traffic_section.get("data_gap_note"):
         items.append(_item("MEDIUM", traffic_section["data_gap_note"]))
 
+    if traffic_section.get("data_anomaly_note"):
+        items.append(_item("MEDIUM", traffic_section["data_anomaly_note"]))
+
     untagged = next((c for c in customer_metrics_section["channels"] if c["channel"] == "Untagged / Other"), None)
     if untagged and untagged["note"]:
         items.append(_item("MEDIUM", f"{untagged['share']} of transactions this period have no Customer Type tag - this affects channel-mix accuracy across every section of this report."))

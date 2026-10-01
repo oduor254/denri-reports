@@ -577,6 +577,14 @@ function renderTraffic(traffic) {
     gapEl.hidden = true;
   }
 
+  const anomalyEl = document.getElementById("traffic-anomaly-callout");
+  if (traffic.data_anomaly_note) {
+    anomalyEl.hidden = false;
+    anomalyEl.innerHTML = `<strong>⚠️ DATA ERROR</strong><br>${traffic.data_anomaly_note}`;
+  } else {
+    anomalyEl.hidden = true;
+  }
+
   attachSortableTable(
     document.getElementById("traffic-table"),
     () => traffic.rows,

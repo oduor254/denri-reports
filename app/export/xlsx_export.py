@@ -218,6 +218,8 @@ def _traffic_sheet(wb, data):
     row = _title(ws, 1, "5. Foot & Online Traffic Analysis")
     if data.get("data_gap_note"):
         row = _note(ws, row, f"DATA GAP: {data['data_gap_note']}")
+    if data.get("data_anomaly_note"):
+        row = _note(ws, row, f"DATA ERROR: {data['data_anomaly_note']}")
     row = _write_table(
         ws, row,
         ["Shop", "Walk-in Purchased", "Walk-in Total", "Conv. Rate", "Online", "Activation", "Total Customers"],

@@ -13,6 +13,9 @@ Structure (verified directly against the live sheet - see plan notes):
   - WEEK N / MONTHLY blocks are the sheet's own rollups and are skipped - period
     aggregates are recomputed from the daily blocks for consistency with the rest
     of the app.
+  - Negative counts (e.g. W.NOT PURCHASED = -3, where a shop entered a TOTAL lower
+    than its purchases) are kept as-is so totals reconcile with the sheet's own
+    rollups, and are reported as anomalies so the bad cell can be fixed at source.
 """
 import re
 import threading
@@ -27,7 +30,7 @@ from app.sheets_client import get_worksheet_values
 _DATE_RE = re.compile(r"^\d{2}/\d{2}/\d{4}$")
 
 _lock = threading.Lock()
-_cache = {"fetched_at": 0.0, "df": None, "gaps": None}
+_cache = {"fetched_at": 0.0, "df": None, "gaps": None, "anomalies": None}
 
 
 def _find_block_labels(row1: list, row2: list) -> list:
@@ -76,7 +79,17 @@ def _resolve_blank_runs(blocks: list) -> list:
 
 def _int(v: str) -> int:
     v = v.strip().replace(",", "")
-    return int(v) if v.isdigit() else 0
+    return int(v) if re.fullmatch(r"-?\d+", v) else 0
+
+
+def _cell_ref(row_idx: int, col_idx: int) -> str:
+    """0-based (row, col) -> A1 reference, e.g. (16, 1188) -> 'ATG17'."""
+    letters = ""
+    col = col_idx + 1
+    while col:
+        col, rem = divmod(col - 1, 26)
+        letters = chr(65 + rem) + letters
+    return f"{letters}{row_idx + 1}"
 
 
 def _parse_footfall(values: list):
@@ -102,7 +115,8 @@ def _parse_footfall(values: list):
 
     # Shop rows: column A from row 3 until a blank cell or a "Total" label.
     records = []
-    for row in values[2:]:
+    anomalies = []
+    for row_idx, row in enumerate(values[2:], start=2):
         shop = row[0].strip() if row else ""
         if not shop or shop.upper() == "TOTAL":
             break
@@ -110,6 +124,12 @@ def _parse_footfall(values: list):
             s = b["start"]
             purchased = _int(row[s]) if s < len(row) else 0
             not_purchased = _int(row[s + 1]) if s + 1 < len(row) else 0
+            for offset, field, value in ((0, "WALKINS PURCHASED", purchased), (1, "W.NOT PURCHASED", not_purchased)):
+                if value < 0:
+                    anomalies.append({
+                        "shop": shop, "date": b["date"], "field": field,
+                        "value": value, "cell": _cell_ref(row_idx, s + offset),
+                    })
             records.append({
                 "Shop": shop,
                 "Date": b["date"],
@@ -121,17 +141,22 @@ def _parse_footfall(values: list):
     df = pd.DataFrame(records, columns=["Shop", "Date", "Walkins Purchased", "Walkins Not Purchased", "Total"])
     if not df.empty:
         df["Date"] = pd.to_datetime(df["Date"])
-    return df, gaps
+    return df, gaps, anomalies
 
 
 def load_footfall_df(force_refresh: bool = False) -> pd.DataFrame:
-    df, _ = _load(force_refresh)
+    df, _, _ = _load(force_refresh)
     return df
 
 
 def get_footfall_gaps(force_refresh: bool = False) -> list:
-    _, gaps = _load(force_refresh)
+    _, gaps, _ = _load(force_refresh)
     return gaps
+
+
+def get_footfall_anomalies(force_refresh: bool = False) -> list:
+    _, _, anomalies = _load(force_refresh)
+    return anomalies
 
 
 def _load(force_refresh: bool):
@@ -141,14 +166,15 @@ def _load(force_refresh: bool):
             and _cache["df"] is not None
             and time.time() - _cache["fetched_at"] < Config.SHEET_CACHE_TTL_SECONDS
         ):
-            return _cache["df"], _cache["gaps"]
+            return _cache["df"], _cache["gaps"], _cache["anomalies"]
 
     values = get_worksheet_values(Config.SHEET_FOOTFALL, force_refresh=force_refresh)
-    df, gaps = _parse_footfall(values)
+    df, gaps, anomalies = _parse_footfall(values)
 
     with _lock:
         _cache["df"] = df
         _cache["gaps"] = gaps
+        _cache["anomalies"] = anomalies
         _cache["fetched_at"] = time.time()
 
-    return df, gaps
+    return df, gaps, anomalies
