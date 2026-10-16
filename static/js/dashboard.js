@@ -860,6 +860,30 @@ async function fetchAndRender() {
   }
 }
 
+function initThemeSwitcher() {
+  const select = document.getElementById("theme-select");
+  if (!select) return;
+
+  let saved = "auto";
+  try {
+    saved = localStorage.getItem("denri-theme") || "auto";
+  } catch (e) { /* localStorage unavailable - stay on auto */ }
+  select.value = saved;
+
+  select.onchange = () => {
+    const theme = select.value;
+    if (theme === "auto") {
+      document.documentElement.removeAttribute("data-theme");
+    } else {
+      document.documentElement.setAttribute("data-theme", theme);
+    }
+    try {
+      localStorage.setItem("denri-theme", theme);
+    } catch (e) { /* localStorage unavailable - theme still applies this session */ }
+  };
+}
+
 window.addEventListener("popstate", () => fetchAndRender());
 
+initThemeSwitcher();
 fetchAndRender();

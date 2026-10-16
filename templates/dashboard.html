@@ -1,5 +1,17 @@
 <title>Denri Africa — Sales Performance Dashboard</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<script>
+  // Applies any saved theme before the page paints, so switching themes
+  // earlier doesn't flash the default Light theme on reload.
+  (function () {
+    try {
+      var saved = localStorage.getItem("denri-theme");
+      if (saved && saved !== "auto") {
+        document.documentElement.setAttribute("data-theme", saved);
+      }
+    } catch (e) { /* localStorage unavailable (private mode, etc.) - fall back to auto */ }
+  })();
+</script>
 
 <div class="page">
   <div id="loading" class="loading">Loading report…</div>
@@ -28,6 +40,12 @@
       <button type="button" class="filter-refresh-btn" id="filter-refresh" title="Refresh data from Google Sheets">
         <span class="refresh-icon" id="filter-refresh-icon">⟳</span> Refresh
       </button>
+      <select id="theme-select" class="theme-select" aria-label="Dashboard theme" title="Dashboard theme">
+        <option value="auto">🖥 Auto</option>
+        <option value="light">☀ Light</option>
+        <option value="dark">🌙 Dark</option>
+        <option value="analytics">🎨 Analytics</option>
+      </select>
       <div class="filter-export">
         <button type="button" class="filter-export-btn" id="export-docx" title="Export this report as a Word document">⬇ .docx</button>
         <button type="button" class="filter-export-btn" id="export-xlsx" title="Export this report as an Excel workbook">⬇ .xlsx</button>

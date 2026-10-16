@@ -28,8 +28,14 @@
   --font: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
+/* Three selectable themes (Light / Dark / Analytics), chosen via the theme
+   switcher in the filter bar and persisted in localStorage (see
+   initThemeSwitcher() in dashboard.js). With no explicit choice saved yet,
+   :root carries the Light values above and this media query follows the OS
+   instead - scoped to :not([data-theme]) so it steps aside the moment the
+   visitor picks a theme explicitly. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --surface-1: #1a1a19;
     --page-plane: #0d0d0d;
     --text-primary: #ffffff;
@@ -53,6 +59,58 @@
     --series-4: #008300;
     --series-3-ink: #0b0b0b;
   }
+}
+
+:root[data-theme="dark"] {
+  --surface-1: #1a1a19;
+  --page-plane: #0d0d0d;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #898781;
+  --gridline: #2c2c2a;
+  --baseline: #383835;
+  --border: rgba(255, 255, 255, 0.10);
+
+  --blue: #3987e5;
+
+  --good: #0ca30c;
+  --warning: #fab219;
+  --warning-ink: #fab219;
+  --serious: #ec835a;
+  --critical: #d03b3b;
+
+  --series-1: #3987e5;
+  --series-2: #199e70;
+  --series-3: #c98500;
+  --series-4: #008300;
+  --series-3-ink: #0b0b0b;
+}
+
+/* Analytics theme - the lavender/indigo/purple-teal-yellow palette built for
+   the .pptx export, offered here too so the dashboard can match the deck. */
+:root[data-theme="analytics"] {
+  --surface-1: #ffffff;
+  --page-plane: #f3f1fc;
+  --text-primary: #2a2552;
+  --text-secondary: #4a4470;
+  --text-muted: #8b86ae;
+  --gridline: #e7e3fa;
+  --baseline: #cfc8f0;
+  --border: rgba(42, 37, 82, 0.12);
+
+  --blue: #7b6ef3;
+
+  --good: #1fa363;
+  --warning: #c98a0a;
+  --warning-ink: #6b4a00;
+  --serious: #ff8a65;
+  --critical: #e14b5a;
+
+  --series-1: #7b6ef3;
+  --series-2: #2fc2b2;
+  --series-3: #fbc02b;
+  --series-4: #ff8a65;
+  --series-3-ink: #2a2552;
 }
 
 * { box-sizing: border-box; }
@@ -256,6 +314,23 @@ body {
 @keyframes viz-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+.theme-select {
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--gridline);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  height: 28px;
+  cursor: pointer;
+}
+
+.theme-select:hover {
+  color: var(--text-primary);
 }
 
 .filter-export {
