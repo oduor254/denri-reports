@@ -626,7 +626,6 @@ function renderRevenueAnalysis(revenueAnalysis) {
         <td class="col-value">${row.revenue}</td>
         <td class="col-value">${row.first_order}</td>
         <td class="col-value">${row.last_order}</td>
-        <td class="col-value">${row.served_by}</td>
       </tr>
     `,
     { defaultKey: "revenue_raw", isTotalRow: row => row.customer === "TOTAL" }

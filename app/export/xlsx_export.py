@@ -262,11 +262,11 @@ def _revenue_sheet(wb, data):
     row = _note(ws, row, data["corporate_meeting_note"])
 
     row = _subtitle(ws, row, "6.3 Top Corporate Clients")
-    row = _note(ws, row, "All-time corporate client activity (not scoped to the selected period).")
+    row = _note(ws, row, "Clients with a First or Last Order in the selected period. Orders/Bags/Revenue are lifetime totals.")
     row = _write_table(
-        ws, row, ["Customer", "Orders", "Bags", "Revenue", "First Order", "Last Order", "Served By"], data["corporate_clients"],
+        ws, row, ["Customer", "Orders", "Bags", "Revenue", "First Order", "Last Order"], data["corporate_clients"],
         [lambda r: r["customer"], lambda r: r["orders"], lambda r: r["bags"], lambda r: r["revenue"],
-         lambda r: r["first_order"], lambda r: r["last_order"], lambda r: r["served_by"]],
+         lambda r: r["first_order"], lambda r: r["last_order"]],
     )
     _autosize(ws)
 

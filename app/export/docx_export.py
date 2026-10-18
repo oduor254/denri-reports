@@ -318,11 +318,11 @@ def _revenue_analysis(doc, data):
     _callout(doc, data["corporate_meeting_note"], kind="meeting", icon="\U0001F4CB")
 
     _subheading(doc, "6.3", "Top Corporate Clients")
-    _para(doc, "All-time corporate client activity (not scoped to the selected period).", size=9, italic=True, color=MUTED)
+    _para(doc, "Clients with a First or Last Order in the selected period. Orders/Bags/Revenue are lifetime totals.", size=9, italic=True, color=MUTED)
     _add_table(
-        doc, ["Customer", "Orders", "Bags", "Revenue", "First Order", "Last Order", "Served By"], data["corporate_clients"],
+        doc, ["Customer", "Orders", "Bags", "Revenue", "First Order", "Last Order"], data["corporate_clients"],
         [lambda r: r["customer"], lambda r: r["orders"], lambda r: r["bags"], lambda r: r["revenue"],
-         lambda r: r["first_order"], lambda r: r["last_order"], lambda r: r["served_by"]],
+         lambda r: r["first_order"], lambda r: r["last_order"]],
     )
 
 

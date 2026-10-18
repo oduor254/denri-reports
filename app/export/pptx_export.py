@@ -556,7 +556,7 @@ def _revenue_slides(prs, data):
     _callout(slide3, "\U0001F4CB " + data["corporate_meeting_note"], Inches(4.3))
 
     slide4 = _new_slide(prs)
-    _section_title(slide4, 6, "Revenue Analysis", "6.3 Top Corporate Clients (all-time)")
+    _section_title(slide4, 6, "Revenue Analysis", "6.3 Top Corporate Clients")
     clients = [r for r in data["corporate_clients"] if r["customer"] != "TOTAL"][:8]
     if clients:
         _add_bar_chart(slide4, [r["customer"] for r in clients], [("Revenue (KES)", [r["revenue_raw"] for r in clients])],
@@ -565,7 +565,7 @@ def _revenue_slides(prs, data):
     _add_table(slide4, ["Customer", "Orders", "Bags", "Revenue"], rows,
                ["customer", "orders", "bags", "revenue"], Inches(1.4), left=RIGHT_LEFT, width=RIGHT_W)
     _truncation_note(slide4, omitted, Inches(6.0), left=RIGHT_LEFT, width=RIGHT_W)
-    _caption(slide4, "Not scoped to the selected period - the Corporate sheet tracks each client's lifetime order history.",
+    _caption(slide4, "Clients with a First or Last Order in the selected period. Orders/Bags/Revenue are lifetime totals.",
              MARGIN, Inches(5.5), LEFT_W, Inches(0.6))
 
 

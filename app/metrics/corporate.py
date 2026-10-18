@@ -49,11 +49,29 @@ def build_overall_kpi_card(comparison: list, compared_to: str) -> dict:
     }
 
 
-def build_client_rows(corporate_df: pd.DataFrame) -> list:
+def build_client_rows(corporate_df: pd.DataFrame, period: dict) -> list:
+    """A client counts as active this period if their First or Last Order
+    date falls inside the selected window - the sheet only records those two
+    dates per client (not a date per order), so that's the closest honest
+    match to 'activity within the period' the data supports. Orders/Bags/
+    Revenue shown are still each client's lifetime totals (the sheet has no
+    per-period breakdown), not a period-scoped figure - see the frontend
+    caption."""
     if corporate_df.empty:
         return []
 
-    df = corporate_df.sort_values("Revenue", ascending=False)
+    df = corporate_df.copy()
+    first = pd.to_datetime(df["First Order"], format="%m/%d/%Y", errors="coerce").dt.date
+    last = pd.to_datetime(df["Last Order"], format="%m/%d/%Y", errors="coerce").dt.date
+    in_period = (
+        ((first >= period["start"]) & (first <= period["end"]))
+        | ((last >= period["start"]) & (last <= period["end"]))
+    )
+    df = df[in_period]
+    if df.empty:
+        return []
+
+    df = df.sort_values("Revenue", ascending=False)
     rows = []
     for _, r in df.iterrows():
         rows.append({
@@ -63,7 +81,6 @@ def build_client_rows(corporate_df: pd.DataFrame) -> list:
             "revenue": fmt.money(r["Revenue"]),
             "first_order": r["First Order"],
             "last_order": r["Last Order"],
-            "served_by": r["Served By"],
             "orders_raw": int(r["Orders"]),
             "bags_raw": int(r["Bags"]),
             "revenue_raw": float(r["Revenue"]),
@@ -75,7 +92,7 @@ def build_client_rows(corporate_df: pd.DataFrame) -> list:
         "orders": fmt.count(total_orders),
         "bags": fmt.count(total_bags),
         "revenue": fmt.money(total_revenue),
-        "first_order": "", "last_order": "", "served_by": "",
+        "first_order": "", "last_order": "",
         "orders_raw": total_orders, "bags_raw": total_bags, "revenue_raw": total_revenue,
     })
     return rows
@@ -99,8 +116,8 @@ def build_summary(comparison: list, client_rows: list, period: dict) -> str:
     if client_count:
         top_client = client_rows[0]
         sentences.append(
-            f"{client_count} corporate client(s) on record all-time; the largest is "
-            f"{top_client['customer']} at {top_client['revenue']} lifetime."
+            f"{client_count} corporate client(s) active this period; the largest is "
+            f"{top_client['customer']} at {top_client['revenue']} lifetime revenue."
         )
     return " ".join(sentences)
 
@@ -118,7 +135,7 @@ def build_meeting_note(comparison: list, period: dict) -> str:
 
 def build_section(revenue_sheet_df: pd.DataFrame, corporate_df: pd.DataFrame, cur_retail_revenue: float, prev_retail_revenue: float, period: dict) -> dict:
     comparison = build_comparison_rows(revenue_sheet_df, cur_retail_revenue, prev_retail_revenue, period)
-    client_rows = build_client_rows(corporate_df)
+    client_rows = build_client_rows(corporate_df, period)
     return {
         "summary": build_summary(comparison, client_rows, period),
         "comparison": comparison,
