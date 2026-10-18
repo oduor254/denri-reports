@@ -54,3 +54,25 @@ def compute_kpis(df: pd.DataFrame) -> dict:
         "Activation": (len(activation_df) / transactions * 100) if transactions else 0.0,
         "Customer Type Coverage": (len(tagged_df) / transactions * 100) if transactions else 0.0,
     }
+
+
+def reconcile_revenue(kpis: dict, revenue_sheet_df: pd.DataFrame, start, end) -> dict:
+    """Overrides the Shops-sheet-computed Revenue (and its per-transaction/
+    per-customer averages) with the 'Revenue' sheet's hand-reconciled total
+    for the same window. The two sources drift apart by small amounts over
+    time as entries get corrected at the ledger but not retroactively in the
+    raw transaction log, so every 'Revenue' figure in the report - KPI strip,
+    Executive Summary, Revenue Analysis, the Revenue Bridge trend - is
+    sourced from the reconciled ledger instead of a raw transaction sum, and
+    all mean the same number for a given window. Falls back to the original
+    Shops-sheet value if the Revenue sheet has no rows for this window (e.g.
+    not wired in, or dates outside its coverage)."""
+    window = filter_period(revenue_sheet_df, start, end)
+    if window.empty:
+        return kpis
+    retail_total = float(window["Retail Revenue"].sum())
+    kpis = dict(kpis)
+    kpis["Revenue"] = retail_total
+    kpis["Avg Rev/Txn"] = (retail_total / kpis["Transactions"]) if kpis["Transactions"] else 0.0
+    kpis["Avg Spend/Customer"] = (retail_total / kpis["Customers"]) if kpis["Customers"] else 0.0
+    return kpis

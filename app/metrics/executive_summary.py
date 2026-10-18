@@ -6,7 +6,7 @@ from app.metrics import (
     corporate, customer_metrics, data_quality, feedback, formatting as fmt, gender_performance, priorities,
     revenue, store_performance, traffic,
 )
-from app.metrics.kpis import compute_kpis, filter_period
+from app.metrics.kpis import compute_kpis, filter_period, reconcile_revenue
 from app.metrics.periods import resolve_period
 
 # metric key -> (display label, value kind)
@@ -264,7 +264,7 @@ def build_report(
     if feedback_links_df is None:
         feedback_links_df = pd.DataFrame(columns=["Shop", "Links Sent", "Online", "Walk-Ins"])
     if revenue_sheet_df is None:
-        revenue_sheet_df = pd.DataFrame(columns=["Date", "Corporate Revenue"])
+        revenue_sheet_df = pd.DataFrame(columns=["Date", "Retail Revenue", "Corporate Revenue"])
     if corporate_df is None:
         corporate_df = pd.DataFrame(columns=["Customer", "Phone", "Orders", "Bags", "Revenue", "First Order", "Last Order", "Served By"])
 
@@ -277,6 +277,14 @@ def build_report(
 
     cur_kpis = compute_kpis(cur_df)
     prev_kpis = compute_kpis(prev_df)
+    # "Revenue" (and its per-transaction/per-customer averages) is sourced
+    # from the hand-reconciled 'Revenue' sheet rather than re-summed from raw
+    # Shops transactions - the two drift apart by small amounts as entries
+    # get corrected at the ledger. This makes every "Revenue" figure in the
+    # report (KPI strip, Executive Summary, Revenue Analysis, the Revenue
+    # Bridge trend) consistently mean the reconciled number.
+    cur_kpis = reconcile_revenue(cur_kpis, revenue_sheet_df, period["start"], period["end"])
+    prev_kpis = reconcile_revenue(prev_kpis, revenue_sheet_df, period["prev_start"], period["prev_end"])
     evaluated = evaluate_metrics(cur_kpis, prev_kpis)
 
     meta = {
@@ -299,9 +307,10 @@ def build_report(
     store_section = store_performance.build_section(cur_df, prev_df, period_type, period)
     gender_section = gender_performance.build_section(cur_df, prev_df, period)
     traffic_section = traffic.build_section(footfall_df, footfall_gaps or [], cur_df, period, footfall_anomalies or [])
-    revenue_section = revenue.build_section(df, cur_kpis, prev_kpis, period_type, period)
+    revenue_section = revenue.build_section(df, revenue_sheet_df, cur_kpis, prev_kpis, period_type, period)
     corporate_section = corporate.build_section(revenue_sheet_df, corporate_df, cur_kpis["Revenue"], prev_kpis["Revenue"], period)
-    revenue_section["kpi_cards"].append(corporate_section["kpi_card"])
+    revenue_section["kpi_cards"].append(corporate_section["corporate_kpi_card"])
+    revenue_section["kpi_cards"].append(corporate_section["overall_kpi_card"])
     revenue_section["corporate_summary"] = corporate_section["summary"]
     revenue_section["corporate_comparison"] = corporate_section["comparison"]
     revenue_section["corporate_clients"] = corporate_section["clients"]
@@ -309,12 +318,13 @@ def build_report(
     data_quality_section = data_quality.build_section(cur_df, prev_df, period)
     feedback_section = feedback.build_section(feedback_daily_df, feedback_by_shop_df, feedback_links_df, period_type, period)
 
-    # Overall Revenue sits right next to the main Revenue card at the top of
-    # the page (not just inside the Revenue Analysis section) since it's the
-    # headline retail+corporate figure - per explicit request, without
-    # altering what the existing "Revenue" card itself reports.
+    # Corporate Revenue and Overall Revenue sit right next to the main
+    # Revenue card at the top of the page (not just inside the Revenue
+    # Analysis section), without altering what the existing "Revenue" card
+    # itself reports (retail only).
     kpi_strip = build_kpi_strip(cur_kpis, prev_kpis, period["compared_to"])
-    kpi_strip.insert(1, corporate_section["kpi_card"])
+    kpi_strip.insert(1, corporate_section["corporate_kpi_card"])
+    kpi_strip.insert(2, corporate_section["overall_kpi_card"])
 
     return {
         "meta": meta,

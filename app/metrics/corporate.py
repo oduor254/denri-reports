@@ -2,12 +2,12 @@
 re-tag of existing data: Corporate sales (bulk/B2B, handled by named sales
 reps per the 'Corporate' sheet) are recorded in a separate daily ledger (the
 'Revenue' sheet's CORPORATE column) and aren't present in the Shops sheet's
-per-transaction rows at all. The existing 'Revenue' KPI/metric is left
-untouched everywhere it already appears - this adds Corporate Revenue as its
-own tracked line, plus an explicit 'Overall Revenue' (retail + corporate)
-figure, per user request, rather than silently folding corporate sales into
-the already-verified headline Revenue number.
-"""
+per-transaction rows at all. Corporate Revenue is its own tracked KPI, and
+Overall Revenue (retail + corporate) is reported explicitly alongside it
+rather than silently merged into the plain 'Revenue' card - 'Revenue' itself
+means retail only, everywhere it's shown (its *source* is the reconciled
+Revenue sheet as of app/metrics/kpis.py's reconcile_revenue(), not raw Shops
+transactions, but it still excludes Corporate)."""
 import pandas as pd
 
 from app.metrics import formatting as fmt
@@ -44,6 +44,17 @@ def build_overall_kpi_card(comparison: list, compared_to: str) -> dict:
     return {
         "label": "Overall Revenue (incl. Corporate)",
         "value": fmt.money(overall["current_raw"]),
+        "sub": f"{change} vs {compared_to}",
+        "tone": dir_,
+    }
+
+
+def build_corporate_kpi_card(comparison: list, compared_to: str) -> dict:
+    corp = next(r for r in comparison if r["metric"] == "Corporate Revenue")
+    change, dir_ = fmt.combined_money_delta(corp["current_raw"], corp["previous_raw"])
+    return {
+        "label": "Corporate Revenue",
+        "value": fmt.money(corp["current_raw"]),
         "sub": f"{change} vs {compared_to}",
         "tone": dir_,
     }
@@ -140,6 +151,7 @@ def build_section(revenue_sheet_df: pd.DataFrame, corporate_df: pd.DataFrame, cu
         "summary": build_summary(comparison, client_rows, period),
         "comparison": comparison,
         "clients": client_rows,
-        "kpi_card": build_overall_kpi_card(comparison, period["compared_to"]),
+        "overall_kpi_card": build_overall_kpi_card(comparison, period["compared_to"]),
+        "corporate_kpi_card": build_corporate_kpi_card(comparison, period["compared_to"]),
         "meeting_note": build_meeting_note(comparison, period),
     }

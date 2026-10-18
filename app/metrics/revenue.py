@@ -1,7 +1,7 @@
 import pandas as pd
 
 from app.metrics import formatting as fmt
-from app.metrics.kpis import compute_kpis, filter_period
+from app.metrics.kpis import compute_kpis, filter_period, reconcile_revenue
 from app.metrics.periods import sequence_periods
 
 _BRIDGE_COUNTS = {"day": 7, "week": 6, "month": 6}
@@ -55,7 +55,7 @@ def build_comparison_rows(cur_kpis: dict, prev_kpis: dict) -> list:
     return rows
 
 
-def build_bridge(df: pd.DataFrame, period_type: str, period: dict) -> list:
+def build_bridge(df: pd.DataFrame, revenue_sheet_df: pd.DataFrame, period_type: str, period: dict) -> list:
     count = _BRIDGE_COUNTS.get(period_type, 6)
     windows = sequence_periods(period_type, period["start"], period["end"], count)
 
@@ -64,6 +64,7 @@ def build_bridge(df: pd.DataFrame, period_type: str, period: dict) -> list:
     for w in windows:
         window_df = filter_period(df, w["start"], w["end"])
         kpis = compute_kpis(window_df)
+        kpis = reconcile_revenue(kpis, revenue_sheet_df, w["start"], w["end"])
 
         if prev_revenue is None:
             dir_ = "neutral"
@@ -117,8 +118,8 @@ def build_meeting_note(cur_kpis: dict, prev_kpis: dict, period: dict) -> str:
     return f"Revenue was broadly stable vs {period['compared_to']} - no escalations needed."
 
 
-def build_section(df: pd.DataFrame, cur_kpis: dict, prev_kpis: dict, period_type: str, period: dict) -> dict:
-    bridge = build_bridge(df, period_type, period)
+def build_section(df: pd.DataFrame, revenue_sheet_df: pd.DataFrame, cur_kpis: dict, prev_kpis: dict, period_type: str, period: dict) -> dict:
+    bridge = build_bridge(df, revenue_sheet_df, period_type, period)
     return {
         "summary": build_summary(cur_kpis, prev_kpis, bridge, period),
         "kpi_cards": build_kpi_cards(cur_kpis, prev_kpis, period["compared_to"]),

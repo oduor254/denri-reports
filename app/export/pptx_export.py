@@ -438,8 +438,9 @@ def _customer_metrics_slides(prs, data):
     slide3 = _new_slide(prs)
     _section_title(slide3, 2, "Customer Metrics", "2.2 Channel Overview")
     channels = [r for r in data["channels"] if r["channel"] != "TOTAL"]
-    _add_donut_chart(slide3, [r["channel"] for r in channels], [_num(r["customers"]) for r in channels],
-                      MARGIN, Inches(1.4), LEFT_W, Inches(3.8))
+    if channels:
+        _add_donut_chart(slide3, [r["channel"] for r in channels], [_num(r["customers"]) for r in channels],
+                          MARGIN, Inches(1.4), LEFT_W, Inches(3.8))
     _add_table(slide3, ["Channel", "Customers", "Share", "Avg Spend", "Note"], data["channels"],
                ["channel", "customers", "share", "avg_spend", "note"], Inches(1.4), left=RIGHT_LEFT, width=RIGHT_W)
     _callout(slide3, "\U0001F4CB " + data["meeting_note"], Inches(5.5))
@@ -452,8 +453,9 @@ def _store_performance_slides(prs, data):
 
     shops = [r for r in data["rows"] if r["shop"] != "TOTAL"][:8]
     top_shop = max(shops, key=lambda r: r["current_raw"]) if shops else None
-    _add_bar_chart(slide, [r["shop"] for r in shops], [("Revenue (KES)", [r["current_raw"] for r in shops])],
-                   MARGIN, Inches(2.0), LEFT_W, Inches(3.6), horizontal=True, number_format='"KES" #,##0')
+    if shops:
+        _add_bar_chart(slide, [r["shop"] for r in shops], [("Revenue (KES)", [r["current_raw"] for r in shops])],
+                       MARGIN, Inches(2.0), LEFT_W, Inches(3.6), horizontal=True, number_format='"KES" #,##0')
     if top_shop:
         _caption(slide, f"{top_shop['shop']} led store revenue this period at {top_shop['current']}.",
                  MARGIN, Inches(5.6), LEFT_W, Inches(0.5))
@@ -490,8 +492,9 @@ def _gender_performance_slides(prs, data):
         _textbox(slide, f"Ratio: {data['ratio']['ratio_text']}", MARGIN, Inches(1.85), CONTENT_W, Inches(0.4), size=13, bold=True, color=PURPLE)
 
     overall = data["overall"]
-    _add_donut_chart(slide, [r["gender"] for r in overall], [_num(r["count"]) for r in overall],
-                      MARGIN, Inches(2.3), LEFT_W, Inches(3.8))
+    if overall:
+        _add_donut_chart(slide, [r["gender"] for r in overall], [_num(r["count"]) for r in overall],
+                          MARGIN, Inches(2.3), LEFT_W, Inches(3.8))
     _add_table(slide, ["Gender", "Count", "%", "Change"], overall,
                ["gender", "count", "pct", "change"], Inches(2.3), color_key=(3, "dir"), left=RIGHT_LEFT, width=RIGHT_W)
 
@@ -519,11 +522,12 @@ def _traffic_slide(prs, data):
         top += Inches(0.6)
 
     shops = [r for r in data["rows"] if r["shop"] != "TOTAL"][:8]
-    _add_bar_chart(
-        slide, [r["shop"] for r in shops],
-        [("Walk-in", [r["walkin_total_raw"] for r in shops]), ("Online", [r["online_raw"] for r in shops])],
-        MARGIN, top, LEFT_W, Inches(4.6 - (Emu(top).inches - 1.95)),
-    )
+    if shops:
+        _add_bar_chart(
+            slide, [r["shop"] for r in shops],
+            [("Walk-in", [r["walkin_total_raw"] for r in shops]), ("Online", [r["online_raw"] for r in shops])],
+            MARGIN, top, LEFT_W, Inches(4.6 - (Emu(top).inches - 1.95)),
+        )
 
     rows, omitted = _top_n(data["rows"], 8)
     _add_table(slide, ["Shop", "Walk-in Total", "Conv. Rate", "Total Customers"], rows,
@@ -614,8 +618,9 @@ def _feedback_slides(prs, data):
     slide2 = _new_slide(prs)
     _section_title(slide2, 8, "Customer Feedback", "8.1 Store Breakdown — Feedback Responses")
     shops = [r for r in data["store_breakdown"] if r["shop"] != "TOTAL"][:8]
-    _add_bar_chart(slide2, [r["shop"] for r in shops], [("Responses", [r["current_raw"] for r in shops])],
-                   MARGIN, Inches(1.4), LEFT_W, Inches(3.9), horizontal=True)
+    if shops:
+        _add_bar_chart(slide2, [r["shop"] for r in shops], [("Responses", [r["current_raw"] for r in shops])],
+                       MARGIN, Inches(1.4), LEFT_W, Inches(3.9), horizontal=True)
     rows, omitted = _top_n(data["store_breakdown"], 10)
     _add_table(slide2, ["Shop", "Current", "Previous", "Change"], rows,
                ["shop", "current", "previous", "change"], Inches(1.4), color_key=(3, "dir"), left=RIGHT_LEFT, width=RIGHT_W)
