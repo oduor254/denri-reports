@@ -111,7 +111,7 @@ def _section_title(slide, number, title, sub=None):
 def _top_n(rows, n=8):
     if not rows:
         return rows, 0
-    if rows[-1].get("shop", rows[-1].get("metric", "")).strip().upper() != "TOTAL" or len(rows) <= n + 1:
+    if rows[-1].get("shop", rows[-1].get("metric", rows[-1].get("customer", ""))).strip().upper() != "TOTAL" or len(rows) <= n + 1:
         return rows[: n + 1], max(0, len(rows) - (n + 1))
     total = rows[-1]
     top = rows[:n]
@@ -142,7 +142,7 @@ def _add_table(slide, headers, rows, keys, top, height=None, color_key=None, lef
         para.font.color.rgb = INDIGO
 
     for r, row in enumerate(rows, start=1):
-        is_total = str(row.get("shop", row.get("metric", ""))).strip().upper() == "TOTAL"
+        is_total = str(row.get("shop", row.get("metric", row.get("customer", "")))).strip().upper() == "TOTAL"
         values = _pick(row, keys)
         for c, val in enumerate(values):
             cell = table.cell(r, c)
@@ -547,6 +547,26 @@ def _revenue_slides(prs, data):
     _add_table(slide2, ["Metric", "Current", "Previous", "Change"], data["comparison"],
                ["metric", "current", "previous", "change"], Inches(1.3), color_key=(3, "dir"))
     _callout(slide2, "\U0001F4CB " + data["meeting_note"], Inches(5.0))
+
+    slide3 = _new_slide(prs)
+    _section_title(slide3, 6, "Revenue Analysis", "6.2 Corporate Revenue")
+    _textbox(slide3, data["corporate_summary"], MARGIN, Inches(1.3), CONTENT_W, Inches(1.0), size=12, color=INK)
+    _add_table(slide3, ["Metric", "Current", "Previous", "Change"], data["corporate_comparison"],
+               ["metric", "current", "previous", "change"], Inches(2.5), color_key=(3, "dir"))
+    _callout(slide3, "\U0001F4CB " + data["corporate_meeting_note"], Inches(4.3))
+
+    slide4 = _new_slide(prs)
+    _section_title(slide4, 6, "Revenue Analysis", "6.3 Top Corporate Clients (all-time)")
+    clients = [r for r in data["corporate_clients"] if r["customer"] != "TOTAL"][:8]
+    if clients:
+        _add_bar_chart(slide4, [r["customer"] for r in clients], [("Revenue (KES)", [r["revenue_raw"] for r in clients])],
+                        MARGIN, Inches(1.4), LEFT_W, Inches(3.9), horizontal=True, number_format='"KES" #,##0')
+    rows, omitted = _top_n(data["corporate_clients"], 8)
+    _add_table(slide4, ["Customer", "Orders", "Bags", "Revenue"], rows,
+               ["customer", "orders", "bags", "revenue"], Inches(1.4), left=RIGHT_LEFT, width=RIGHT_W)
+    _truncation_note(slide4, omitted, Inches(6.0), left=RIGHT_LEFT, width=RIGHT_W)
+    _caption(slide4, "Not scoped to the selected period - the Corporate sheet tracks each client's lifetime order history.",
+             MARGIN, Inches(5.5), LEFT_W, Inches(0.6))
 
 
 def _data_quality_slide(prs, data):

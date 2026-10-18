@@ -611,6 +611,27 @@ function renderRevenueAnalysis(revenueAnalysis) {
     </tr>
   `).join("");
 
+  document.getElementById("corporate-summary").textContent = revenueAnalysis.corporate_summary;
+  renderComparisonTable(document.querySelector("#corporate-table tbody"), revenueAnalysis.corporate_comparison);
+  renderMeetingNote("corporate-meeting-note", revenueAnalysis.corporate_meeting_note);
+
+  attachSortableTable(
+    document.getElementById("corporate-clients-table"),
+    () => revenueAnalysis.corporate_clients,
+    row => `
+      <tr class="${row.customer === "TOTAL" ? "row-total" : ""}">
+        <td class="col-metric">${row.customer}</td>
+        <td class="col-value">${row.orders}</td>
+        <td class="col-value">${row.bags}</td>
+        <td class="col-value">${row.revenue}</td>
+        <td class="col-value">${row.first_order}</td>
+        <td class="col-value">${row.last_order}</td>
+        <td class="col-value">${row.served_by}</td>
+      </tr>
+    `,
+    { defaultKey: "revenue_raw", isTotalRow: row => row.customer === "TOTAL" }
+  );
+
   renderMeetingNote("revenue-meeting-note", revenueAnalysis.meeting_note);
 }
 

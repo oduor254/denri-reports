@@ -15,5 +15,7 @@ class Config:
     SHEET_SHOPS = "Shops"
     SHEET_FEEDBACK = "Revamped feedback"
     SHEET_FOOTFALL = "Footfall"
+    SHEET_REVENUE = "Revenue"
+    SHEET_CORPORATE = "Corporate"
 
     SHEET_CACHE_TTL_SECONDS = 300

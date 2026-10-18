@@ -55,7 +55,7 @@ def _write_table(ws, row, headers, rows, getters, color_specs=None):
     row += 1
 
     for r in rows:
-        is_total = str(r.get("shop", r.get("metric", ""))).strip().upper() == "TOTAL"
+        is_total = str(r.get("shop", r.get("metric", r.get("customer", "")))).strip().upper() == "TOTAL"
         for c, getter in enumerate(getters, start=1):
             cell = ws.cell(row=row, column=c, value=str(getter(r)))
             cell.border = THIN_BORDER
@@ -250,7 +250,24 @@ def _revenue_sheet(wb, data):
         [lambda r: r["period"], lambda r: r["revenue"], lambda r: r["customers"], lambda r: r["avg_spend"], lambda r: r["trend"]],
         color_specs={4: _dir_color},
     )
-    _note(ws, row, data["meeting_note"])
+    row = _note(ws, row, data["meeting_note"])
+
+    row = _subtitle(ws, row, "6.2 Corporate Revenue")
+    row = _note(ws, row, data["corporate_summary"])
+    row = _write_table(
+        ws, row, ["Metric", "Current", "Previous", "Change"], data["corporate_comparison"],
+        [lambda r: r["metric"], lambda r: r["current"], lambda r: r["previous"], lambda r: r["change"]],
+        color_specs={3: _dir_color},
+    )
+    row = _note(ws, row, data["corporate_meeting_note"])
+
+    row = _subtitle(ws, row, "6.3 Top Corporate Clients")
+    row = _note(ws, row, "All-time corporate client activity (not scoped to the selected period).")
+    row = _write_table(
+        ws, row, ["Customer", "Orders", "Bags", "Revenue", "First Order", "Last Order", "Served By"], data["corporate_clients"],
+        [lambda r: r["customer"], lambda r: r["orders"], lambda r: r["bags"], lambda r: r["revenue"],
+         lambda r: r["first_order"], lambda r: r["last_order"], lambda r: r["served_by"]],
+    )
     _autosize(ws)
 
 

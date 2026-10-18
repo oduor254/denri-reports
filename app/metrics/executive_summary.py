@@ -3,7 +3,7 @@ from datetime import datetime
 import pandas as pd
 
 from app.metrics import (
-    customer_metrics, data_quality, feedback, formatting as fmt, gender_performance, priorities,
+    corporate, customer_metrics, data_quality, feedback, formatting as fmt, gender_performance, priorities,
     revenue, store_performance, traffic,
 )
 from app.metrics.kpis import compute_kpis, filter_period
@@ -253,6 +253,7 @@ def build_report(
     footfall_df: pd.DataFrame = None, footfall_gaps: list = None,
     feedback_daily_df: pd.DataFrame = None, feedback_by_shop_df: pd.DataFrame = None,
     feedback_links_df: pd.DataFrame = None, footfall_anomalies: list = None,
+    revenue_sheet_df: pd.DataFrame = None, corporate_df: pd.DataFrame = None,
 ) -> dict:
     if footfall_df is None:
         footfall_df = pd.DataFrame(columns=["Shop", "Date", "Walkins Purchased", "Walkins Not Purchased", "Total"])
@@ -262,6 +263,10 @@ def build_report(
         feedback_by_shop_df = pd.DataFrame(columns=["Date", "Shop", "Responses"])
     if feedback_links_df is None:
         feedback_links_df = pd.DataFrame(columns=["Shop", "Links Sent", "Online", "Walk-Ins"])
+    if revenue_sheet_df is None:
+        revenue_sheet_df = pd.DataFrame(columns=["Date", "Corporate Revenue"])
+    if corporate_df is None:
+        corporate_df = pd.DataFrame(columns=["Customer", "Phone", "Orders", "Bags", "Revenue", "First Order", "Last Order", "Served By"])
 
     max_date = df["Date"].max().date()
     min_date = df["Date"].min().date()
@@ -295,6 +300,12 @@ def build_report(
     gender_section = gender_performance.build_section(cur_df, prev_df, period)
     traffic_section = traffic.build_section(footfall_df, footfall_gaps or [], cur_df, period, footfall_anomalies or [])
     revenue_section = revenue.build_section(df, cur_kpis, prev_kpis, period_type, period)
+    corporate_section = corporate.build_section(revenue_sheet_df, corporate_df, cur_kpis["Revenue"], prev_kpis["Revenue"], period)
+    revenue_section["kpi_cards"].append(corporate_section["kpi_card"])
+    revenue_section["corporate_summary"] = corporate_section["summary"]
+    revenue_section["corporate_comparison"] = corporate_section["comparison"]
+    revenue_section["corporate_clients"] = corporate_section["clients"]
+    revenue_section["corporate_meeting_note"] = corporate_section["meeting_note"]
     data_quality_section = data_quality.build_section(cur_df, prev_df, period)
     feedback_section = feedback.build_section(feedback_daily_df, feedback_by_shop_df, feedback_links_df, period_type, period)
 

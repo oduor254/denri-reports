@@ -2,8 +2,10 @@ from datetime import datetime
 
 from flask import Blueprint, jsonify, render_template, request, send_file
 
+from app.data.corporate import load_corporate_df
 from app.data.feedback import load_feedback_by_shop, load_feedback_daily, load_feedback_links
 from app.data.footfall import get_footfall_anomalies, get_footfall_gaps, load_footfall_df
+from app.data.revenue_sheet import load_revenue_sheet_df
 from app.data.shops import load_shops_df
 from app.export.docx_export import build_docx
 from app.export.pptx_export import build_pptx
@@ -47,10 +49,13 @@ def _load_report():
     feedback_daily_df = load_feedback_daily()
     feedback_by_shop_df = load_feedback_by_shop()
     feedback_links_df = load_feedback_links()
+    revenue_sheet_df = load_revenue_sheet_df()
+    corporate_df = load_corporate_df()
 
     return build_report(
         df, period_type, ref_date, footfall_df, footfall_gaps,
         feedback_daily_df, feedback_by_shop_df, feedback_links_df, footfall_anomalies,
+        revenue_sheet_df, corporate_df,
     )
 
 
@@ -127,4 +132,6 @@ def api_refresh():
     load_shops_df(force_refresh=True)
     load_footfall_df(force_refresh=True)
     load_feedback_daily(force_refresh=True)
+    load_revenue_sheet_df(force_refresh=True)
+    load_corporate_df(force_refresh=True)
     return jsonify({"status": "refreshed"})

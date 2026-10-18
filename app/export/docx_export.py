@@ -159,7 +159,7 @@ def _add_table(doc, headers, rows, getters, color_specs=None, widths=None):
 
     for row in rows:
         cells = table.add_row().cells
-        is_total = str(row.get("shop", row.get("metric", ""))).strip().upper() == "TOTAL"
+        is_total = str(row.get("shop", row.get("metric", row.get("customer", "")))).strip().upper() == "TOTAL"
         for i, getter in enumerate(getters):
             text = str(getter(row))
             p = cells[i].paragraphs[0]
@@ -307,6 +307,23 @@ def _revenue_analysis(doc, data):
         color_specs={4: _dir_color},
     )
     _callout(doc, data["meeting_note"], kind="meeting", icon="\U0001F4CB")
+
+    _subheading(doc, "6.2", "Corporate Revenue")
+    _para(doc, data["corporate_summary"], size=10)
+    _add_table(
+        doc, ["Metric", "Current", "Previous", "Change"], data["corporate_comparison"],
+        [lambda r: r["metric"], lambda r: r["current"], lambda r: r["previous"], lambda r: r["change"]],
+        color_specs={3: _dir_color},
+    )
+    _callout(doc, data["corporate_meeting_note"], kind="meeting", icon="\U0001F4CB")
+
+    _subheading(doc, "6.3", "Top Corporate Clients")
+    _para(doc, "All-time corporate client activity (not scoped to the selected period).", size=9, italic=True, color=MUTED)
+    _add_table(
+        doc, ["Customer", "Orders", "Bags", "Revenue", "First Order", "Last Order", "Served By"], data["corporate_clients"],
+        [lambda r: r["customer"], lambda r: r["orders"], lambda r: r["bags"], lambda r: r["revenue"],
+         lambda r: r["first_order"], lambda r: r["last_order"], lambda r: r["served_by"]],
+    )
 
 
 def _data_quality(doc, data):
