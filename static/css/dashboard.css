@@ -36,54 +36,58 @@
    visitor picks a theme explicitly. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    --surface-1: #1a1a19;
-    --page-plane: #0d0d0d;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #898781;
-    --gridline: #2c2c2a;
-    --baseline: #383835;
-    --border: rgba(255, 255, 255, 0.10);
+    --surface-1: #222220;
+    --page-plane: #141413;
+    /* Softened off-white, not pure #fff - small/thin table numerals at 13px
+       "halate" (glow/blur at the edges) against a near-black surface and end
+       up reading as faint even though the raw contrast ratio is higher; an
+       off-white avoids that while large bold KPI numbers stay just as crisp. */
+    --text-primary: #efeeea;
+    --text-secondary: #c9c7bd;
+    --text-muted: #9a988f;
+    --gridline: #333331;
+    --baseline: #46453f;
+    --border: rgba(255, 255, 255, 0.12);
 
-    --blue: #3987e5;
+    --blue: #5b9bf0;
 
-    --good: #0ca30c;
-    --warning: #fab219;
-    --warning-ink: #fab219;
-    --serious: #ec835a;
-    --critical: #d03b3b;
+    --good: #2fcf5f;
+    --warning: #fbc531;
+    --warning-ink: #fbc531;
+    --serious: #f2966c;
+    --critical: #f0554f;
 
-    --series-1: #3987e5;
-    --series-2: #199e70;
-    --series-3: #c98500;
-    --series-4: #008300;
-    --series-3-ink: #0b0b0b;
+    --series-1: #5b9bf0;
+    --series-2: #2fbf87;
+    --series-3: #d99a1f;
+    --series-4: #3bbf3b;
+    --series-3-ink: #141413;
   }
 }
 
 :root[data-theme="dark"] {
-  --surface-1: #1a1a19;
-  --page-plane: #0d0d0d;
-  --text-primary: #ffffff;
-  --text-secondary: #c3c2b7;
-  --text-muted: #898781;
-  --gridline: #2c2c2a;
-  --baseline: #383835;
-  --border: rgba(255, 255, 255, 0.10);
+  --surface-1: #222220;
+  --page-plane: #141413;
+  --text-primary: #efeeea;
+  --text-secondary: #c9c7bd;
+  --text-muted: #9a988f;
+  --gridline: #333331;
+  --baseline: #46453f;
+  --border: rgba(255, 255, 255, 0.12);
 
-  --blue: #3987e5;
+  --blue: #5b9bf0;
 
-  --good: #0ca30c;
-  --warning: #fab219;
-  --warning-ink: #fab219;
-  --serious: #ec835a;
-  --critical: #d03b3b;
+  --good: #2fcf5f;
+  --warning: #fbc531;
+  --warning-ink: #fbc531;
+  --serious: #f2966c;
+  --critical: #f0554f;
 
-  --series-1: #3987e5;
-  --series-2: #199e70;
-  --series-3: #c98500;
-  --series-4: #008300;
-  --series-3-ink: #0b0b0b;
+  --series-1: #5b9bf0;
+  --series-2: #2fbf87;
+  --series-3: #d99a1f;
+  --series-4: #3bbf3b;
+  --series-3-ink: #141413;
 }
 
 /* Analytics theme - the lavender/indigo/purple-teal-yellow palette built for
@@ -499,6 +503,8 @@ table.comparison-table {
   padding: 8px 10px;
   border-bottom: 1px solid var(--gridline);
   font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
 .comparison-table .col-value, .comparison-table .col-change {

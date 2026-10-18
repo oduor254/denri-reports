@@ -309,9 +309,16 @@ def build_report(
     data_quality_section = data_quality.build_section(cur_df, prev_df, period)
     feedback_section = feedback.build_section(feedback_daily_df, feedback_by_shop_df, feedback_links_df, period_type, period)
 
+    # Overall Revenue sits right next to the main Revenue card at the top of
+    # the page (not just inside the Revenue Analysis section) since it's the
+    # headline retail+corporate figure - per explicit request, without
+    # altering what the existing "Revenue" card itself reports.
+    kpi_strip = build_kpi_strip(cur_kpis, prev_kpis, period["compared_to"])
+    kpi_strip.insert(1, corporate_section["kpi_card"])
+
     return {
         "meta": meta,
-        "kpi_strip": build_kpi_strip(cur_kpis, prev_kpis, period["compared_to"]),
+        "kpi_strip": kpi_strip,
         "context_note": build_context_note(period, cur_kpis),
         "exec_summary": {
             "narrative": build_narrative(period, cur_kpis, prev_kpis, evaluated),
